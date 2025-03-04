@@ -1,0 +1,66 @@
+/* auth-styles.css */
+body {
+    font-family: Arial, sans-serif;
+    background: url('/images/background.jpg') no-repeat center center fixed; /* Cambiar por la imagen que prefieras */
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    width: 400px;
+}
+
+h1 {
+    color: #00796b;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+input, button {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #004d40;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: #00796b;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #004d40;
+}
+
+a {
+    color: #004d40;
+    text-decoration: none;
+    font-size: 14px;
+    text-align: center;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.error {
+    color: red;
+    font-size: 14px;
+    margin-top: -10px;
+    margin-bottom: 10px;
+}

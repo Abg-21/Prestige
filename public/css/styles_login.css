@@ -1,0 +1,131 @@
+/* Estilos para el modal de error */
+.venmodal{
+    display: none; /* Por defecto, está oculto */
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro transparente */
+    display: flex; /* Asegurarte de que usa flex para centrar el contenido */
+    justify-content: center; /* Centrar horizontalmente */
+    align-items: center; /* Centrar verticalmente */
+}
+
+.ventana{
+    background-color: rgba(244, 67, 54, 0.9); /* Color rojo con opacidad para el cuadro del modal */
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 18px;
+    width: 300px; /* Ancho del cuadro */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5); /* Agregar sombra para dar profundidad */
+}
+
+/* Fondo general del cuerpo */
+body {
+    font-family: Arial, sans-serif;
+    background: url('../Componentes/tr2.jpg') no-repeat center center fixed; /* Imagen de fondo general */
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+/* Contenedor principal del login */
+.login-container {
+    background-color: transparent; /* Hacer transparente para ver el fondo debajo */
+    width: 320px;
+    text-align: center;
+    position: relative;
+}
+
+/* Contenedor de fondo específico del login */
+.login-background {
+    background: url('../Componentes/alice.jpg') no-repeat center center; /* Imagen específica para el login */
+    background-size: cover;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Superposición para aplicar efectos como transparencia o color adicional */
+.background-overlay {
+    background-color: rgba(255, 255, 255, 0.9); /* Fondo blanco con transparencia */
+    padding: 20px;
+    border-radius: 8px;
+}
+
+/* Estilos restantes */
+h1 {
+    color: #00796b;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    color: #004d40;
+}
+
+.input-container {
+    position: relative;
+}
+
+input[type="text"], 
+input[type="password"] {
+    width: calc(100% - 30px); /* Ajusta el ancho para dejar espacio para el ícono */
+    padding: 10px;
+    border: 1px solid #004d40;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #004d40;
+}
+
+.user-icon::before {
+    content: '\1F464'; /* Emoji de usuario como ícono */
+}
+
+.password-icon::before {
+    content: '\1F512'; /* Emoji de candado como ícono */
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: #00796b;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #004d40;
+}
+
+.highlight {
+    color: blue;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+
+
