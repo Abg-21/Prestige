@@ -35,18 +35,25 @@ Route::get('reset-password/{token}', [ForgotPasswordController::class, 'showRese
 Route::post('reset-password', [ForgotPasswordController::class, 'resetPassword'])->name('password.update');
 
 // Registro y login
-Route::get('/register', [RegisterController::class, 'create'])->name('register');
-Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
-Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
+// Rutas públicas
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
 
-// Dashboard protegido
-Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+// Rutas protegidas por autenticación
+Route::middleware(['auth', 'session.timeout'])->group(function () {
+    // Ruta para cerrar sesión
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    
+    // Rutas para verificar y actualizar la actividad de la sesión
+    Route::post('/check-session', [AuthController::class, 'checkSession'])->name('check.session');
+    Route::post('/update-activity', [AuthController::class, 'updateActivity'])->name('update.activity');
+    
+    // Aquí irían tus otras rutas protegidas, como 'menu'
+    Route::get('/menu', function () {
+        return view('menu'); // Asegúrate de crear esta vista
+    })->name('menu');
 });
+
 
 // Verificación de correo
     Route::middleware(['auth'])->group(function () {
@@ -91,7 +98,7 @@ Route::get('/notificaciones/marcar-como-leido/{id}', [NotificacionController::cl
 Route::get('/notificaciones/crear', [NotificacionController::class, 'crearNotificacion']);
 
 //Menu
-Route::get('/menu', [MenuController::class, 'index'])->name('menu');
+
 
 //Documentos
 Route::resource('documentos', DocumentoController::class);
