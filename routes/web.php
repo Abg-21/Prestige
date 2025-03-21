@@ -1,8 +1,8 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RegisterController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\VerificationController;
 use App\Http\Controllers\CandidatoController;
@@ -27,49 +27,16 @@ Route::get('/menu', function () {
     return view('auth.menu');
 })->name('menu');
 
-
-// Rutas para autenticación y gestión de contraseñas
-Route::get('reset-password', [ForgotPasswordController::class, 'showRequestForm'])->name('password.request');
-Route::post('email', [ForgotPasswordController::class, 'sendResetLink'])->name('password.email');
-Route::get('reset-password/{token}', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset');
-Route::post('reset-password', [ForgotPasswordController::class, 'resetPassword'])->name('password.update');
-
 // Registro y login
 // Rutas públicas
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
 
 // Rutas protegidas por autenticación
-Route::middleware(['auth', 'session.timeout'])->group(function () {
-    // Ruta para cerrar sesión
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-    
-    // Rutas para verificar y actualizar la actividad de la sesión
-    Route::post('/check-session', [AuthController::class, 'checkSession'])->name('check.session');
-    Route::post('/update-activity', [AuthController::class, 'updateActivity'])->name('update.activity');
-    
-    // Aquí irían tus otras rutas protegidas, como 'menu'
-    Route::get('/menu', function () {
-        return view('menu'); // Asegúrate de crear esta vista
-    })->name('menu');
+Route::middleware(['auth', \App\Http\Middleware\SessionTimeout::class])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
 
-
-// Verificación de correo
-    Route::middleware(['auth'])->group(function () {
-    // Mostrar la notificación de verificación
-    Route::get('/email/verify', [VerificationController::class, 'show'])->name('verification.notice');
-
-    // Verificar el correo con el token
-    Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
-        ->middleware(['signed'])
-        ->name('verification.verify');
-
-    // Reenviar el enlace de verificación
-    Route::post('/email/verification-notification', [VerificationController::class, 'resend'])
-        ->middleware(['throttle:6,1'])
-        ->name('verification.send');
-});
 
 //Candidatos
 Route::resource('candidatos', CandidatoController::class);

@@ -13,6 +13,7 @@ class AuthController extends Controller
     {
         $this->middleware('auth')->only(['logout', 'checkSession']);
         $this->middleware('guest')->only(['showLoginForm', 'login']);
+        $this->middleware('session.timeout');
     }
 
     public function showLoginForm()

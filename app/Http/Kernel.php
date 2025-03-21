@@ -7,7 +7,6 @@ use App\Http\Middleware\SessionTimeoutMiddleware;
 
 class Kernel extends HttpKernel
 {
-    // ... código existente ...
     
     /**
      * The application's route middleware.
@@ -15,18 +14,16 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $routeMiddleware = [
-        // ... middleware existentes ...
         'auth' => \App\Http\Middleware\Authenticate::class,
-        'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
-        'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
-        'can' => \Illuminate\Auth\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
-        'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
-        'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
-        'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
-        'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-        'session.timeout' => SessionTimeoutMiddleware::class, // Nuestro nuevo middleware
+        'session.timeout' => \App\Http\Middleware\SessionTimeout::class, // ✅ Nombre correcto
     ];
+    
+    protected $middlewareAliases = [
+        'auth' => \App\Http\Middleware\Authenticate::class,
+        'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+    ];
+    
     
     /**
      * The application's middleware groups.
@@ -35,17 +32,11 @@ class Kernel extends HttpKernel
      */
     protected $middlewareGroups = [
         'web' => [
-            // ... middleware existentes ...
-            \Illuminate\Session\Middleware\StartSession::class,
-            // ... otros middleware ...
-            // Agregar nuestro middleware de timeout a todas las rutas web
-            \App\Http\Middleware\SessionTimeoutMiddleware::class,
+    \Illuminate\Session\Middleware\StartSession::class,
+    'session.timeout',
         ],
-        
-        'api' => [
-            // ... middleware existentes para API ...
+                'api' => [
         ],
     ];
     
-    // ... resto del código ...
 }
