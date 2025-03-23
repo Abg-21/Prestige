@@ -3,7 +3,6 @@
 namespace App\Http;
 
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
-use App\Http\Middleware\SessionTimeoutMiddleware;
 
 class Kernel extends HttpKernel
 {
@@ -16,7 +15,6 @@ class Kernel extends HttpKernel
     protected $routeMiddleware = [
         'auth' => \App\Http\Middleware\Authenticate::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
-        'session.timeout' => \App\Http\Middleware\SessionTimeout::class, // ✅ Nombre correcto
     ];
     
     protected $middlewareAliases = [
@@ -32,9 +30,9 @@ class Kernel extends HttpKernel
      */
     protected $middlewareGroups = [
         'web' => [
-    \Illuminate\Session\Middleware\StartSession::class,
-    'session.timeout',
+            \Illuminate\Session\Middleware\StartSession::class,
         ],
+
                 'api' => [
         ],
     ];

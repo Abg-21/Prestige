@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\ForgotPasswordController;
@@ -27,15 +28,18 @@ Route::get('/menu', function () {
     return view('auth.menu');
 })->name('menu');
 
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
 // Registro y login
 // Rutas públicas
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
 
 // Rutas protegidas por autenticación
-Route::middleware(['auth', \App\Http\Middleware\SessionTimeout::class])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
+
 
 
 //Candidatos
