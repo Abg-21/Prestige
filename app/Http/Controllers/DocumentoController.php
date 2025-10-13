@@ -15,6 +15,49 @@ class DocumentoController extends Controller
         return view('documentos.documentoE', compact('empleados'));
     }
 
+    public function create()
+    {
+        $empleados = Empleado::all();
+        return view('documentos.create', compact('empleados'));
+    }
+
+    public function show($id)
+    {
+        $documento = Documento::with('empleado')->findOrFail($id);
+        return view('documentos.show', compact('documento'));
+    }
+
+    public function edit($id)
+    {
+        $documento = Documento::findOrFail($id);
+        $empleados = Empleado::all();
+        return view('documentos.edit', compact('documento', 'empleados'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $documento = Documento::findOrFail($id);
+        
+        $request->validate([
+            'idEmpleadoFK' => 'required|exists:empleados,idEmpleado',
+            'Archivo' => 'nullable|file|mimes:pdf|max:2048',
+        ]);
+
+        if ($request->hasFile('Archivo')) {
+            // Eliminar archivo anterior
+            Storage::delete($documento->RutaArchivo);
+            
+            // Guardar nuevo archivo
+            $ruta = $request->file('Archivo')->store('documentos');
+            $documento->RutaArchivo = $ruta;
+        }
+
+        $documento->idEmpleadoFK = $request->idEmpleadoFK;
+        $documento->save();
+
+        return redirect()->route('documentos.index')->with('success', 'Documento actualizado correctamente.');
+    }
+
     public function store(Request $request)
     {
         $request->validate([

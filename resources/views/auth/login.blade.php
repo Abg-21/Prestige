@@ -1,61 +1,53 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>Inicio de Sesión</title>
-    <link rel="stylesheet" href="{{ asset('css/styles_login.css') }}">
-</head>
-<body>
-    <div class="login-container">
-        <div class="login-background">
-            <div class="background-overlay">
-                <h1>Grupo Prestige</h1>
-                
-                @if(session('error'))
-                    <p class="error">{{ session('error') }}</p>
-                @endif
-                
-                <form action="{{ route('login.attempt') }}" method="POST">
-                    @csrf
-                    <div class="form-group">
-                        <label for="username">Usuario</label>
-                        <div class="input-container">
-                            <input type="text" id="username" name="username" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="password">Contraseña</label>
-                        <div class="input-container">
-                            <input type="password" id="password" name="password" required>
-                        </div>
-                    </div>
-                    <button type="submit">Iniciar Sesión</button>
-                </form>
+@extends('layouts.app')
+
+@section('content')
+<div class="login-container">
+    <div class="login-background">
+        <div class="background-overlay">
+            <div class="titulo-empresa">
+                <span class="titulo-linea">GRUPO</span>
+                <span class="titulo-linea">PROMOCIONAL</span>
+                <span class="titulo-linea">PRESTIGE</span>
             </div>
+            
+            <form method="POST" action="{{ route('login') }}">
+                @csrf
+                
+                <div class="form-group">
+                    <label for="email">Correo:</label>
+                    <div class="input-container">
+                        <input id="email" 
+                               type="email" 
+                               name="email" 
+                               value="{{ old('email') }}" 
+                               required 
+                               autocomplete="email" 
+                               autofocus
+                               pattern="[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                               title="Ingrese un correo válido con formato: texto@dominio.extensión">
+                        <span class="icon user-icon"></span>
+                    </div>
+                    <div class="validation-message" id="email-error">
+                        Debe incluir @ con texto antes y después, y un punto en el dominio
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña:</label>
+                    <div class="input-container">
+                        <input id="password" 
+                               type="password" 
+                               name="password" 
+                               required 
+                               autocomplete="current-password"
+                               minlength="4">
+                        <span class="icon password-icon"></span>
+                    </div>
+                </div>
+
+                <button type="submit">Iniciar Sesión</button>
+            </form>
         </div>
     </div>
-    
-    <script>
-        // Evitar navegación hacia atrás después de logout
-        window.onload = function() {
-            if (window.history && window.history.pushState) {
-                window.history.pushState('forward', null, window.location.href);
-                window.onpopstate = function() {
-                    window.history.pushState('forward', null, window.location.href);
-                };
-            }
-        }
-        
-        // Desactivar el cache para evitar que la página se muestre después de logout
-        window.onpageshow = function(event) {
-            if (event.persisted) {
-                window.location.reload();
-            }
-        };
-    </script>
-</body>
-</html>
+</div>
+@endsection

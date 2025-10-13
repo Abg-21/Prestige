@@ -3,44 +3,74 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
+use App\Models\Rol;
+use App\Models\Usuario;
 
 class RoleSeeder extends Seeder
 {
     public function run()
     {
-        // Crear permisos de usuarios
-        $crearUsuarios = Permission::firstOrCreate(['name' => 'crear usuarios']);
-        $verUsuarios = Permission::firstOrCreate(['name' => 'ver usuarios']);
-
-        // Permisos adicionales según módulos
-        $gestionarCandidatos = Permission::firstOrCreate(['name' => 'gestionar candidatos']);
-        $gestionarPuestos = Permission::firstOrCreate(['name' => 'gestionar puestos']);
-        $gestionarEmpleados = Permission::firstOrCreate(['name' => 'gestionar empleados']);
-        $gestionarDocumentos = Permission::firstOrCreate(['name' => 'gestionar documentos']);
-
-        // Crear roles
-        $adminRole = Role::firstOrCreate(['name' => 'Administrador', 'guard_name' => 'web']);
-        $rhRole = Role::firstOrCreate(['name' => 'Recursos Humanos', 'guard_name' => 'web']);
-        $contabilidadRole = Role::firstOrCreate(['name' => 'Contabilidad', 'guard_name' => 'web']);
-
-        // Asignar permisos al Administrador (Todos los permisos)
-        $adminRole->syncPermissions([
-            $crearUsuarios, $verUsuarios,
-            $gestionarCandidatos, $gestionarPuestos,
-            $gestionarEmpleados, $gestionarDocumentos,
+        // Crear rol Administrador con TODOS los permisos
+        $adminRole = Rol::firstOrCreate([
+            'nombre' => 'Administrador'
+        ], [
+            'descripcion' => 'Acceso completo al sistema',
+            'permisos' => json_encode([
+                'candidatos' => true,
+                'empleados' => true,
+                'puestos' => true,
+                'giros' => true,
+                'clientes' => true,
+                'documentos' => true,
+                'contratos' => true,
+                'asistencia' => true,
+                'nomina' => true,
+                'eliminados' => true,
+                'usuarios' => true,
+                'roles' => true
+            ])
         ]);
 
-        // Asignar permisos a Recursos Humanos
-        $rhRole->syncPermissions([
-            $gestionarCandidatos, $gestionarPuestos,
-            $gestionarEmpleados, $gestionarDocumentos,
+        // Crear rol Contabilidad (personal, documentación, asistencia, nómina, eliminados)
+        $contabilidadRole = Rol::firstOrCreate([
+            'nombre' => 'Contabilidad'
+        ], [
+            'descripcion' => 'Acceso a personal, documentación y nómina',
+            'permisos' => json_encode([
+                'candidatos' => true,
+                'empleados' => true,
+                'puestos' => false,
+                'giros' => false,
+                'clientes' => false,
+                'documentos' => true,
+                'contratos' => true,
+                'asistencia' => true,
+                'nomina' => true,
+                'eliminados' => true,
+                'usuarios' => false,
+                'roles' => false
+            ])
         ]);
 
-        // Asignar permisos a Contabilidad (Solo ver empleados y documentos)
-        $contabilidadRole->syncPermissions([
-            $gestionarEmpleados, $gestionarDocumentos,
+        // Crear rol RH (todos excepto configuración)
+        $rhRole = Rol::firstOrCreate([
+            'nombre' => 'Recursos Humanos'
+        ], [
+            'descripcion' => 'Acceso completo excepto configuración',
+            'permisos' => json_encode([
+                'candidatos' => true,
+                'empleados' => true,
+                'puestos' => true,
+                'giros' => true,
+                'clientes' => true,
+                'documentos' => true,
+                'contratos' => true,
+                'asistencia' => true,
+                'nomina' => true,
+                'eliminados' => true,
+                'usuarios' => false,
+                'roles' => false
+            ])
         ]);
     }
 }

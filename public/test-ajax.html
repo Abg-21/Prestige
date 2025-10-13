@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prueba de Rutas AJAX</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Prueba de Rutas AJAX</h1>
+    
+    <div id="resultados"></div>
+    
+    <script>
+        // Probar diferentes rutas AJAX
+        var rutas = [
+            '/candidatos',
+            '/clientes', 
+            '/giros',
+            '/empleados',
+            '/puestos',
+            '/documentos'
+        ];
+        
+        rutas.forEach(function(ruta) {
+            $.ajax({
+                url: ruta,
+                type: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(data) {
+                    $('#resultados').append('<div style="color:green;margin:10px;padding:10px;border:1px solid green;"><strong>' + ruta + '</strong>: ✅ ÉXITO (' + data.length + ' caracteres)</div>');
+                },
+                error: function(xhr, status, error) {
+                    $('#resultados').append('<div style="color:red;margin:10px;padding:10px;border:1px solid red;"><strong>' + ruta + '</strong>: ❌ ERROR<br>Status: ' + xhr.status + '<br>Error: ' + error + '<br>Response: ' + xhr.responseText.substring(0, 500) + '</div>');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

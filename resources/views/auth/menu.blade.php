@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Menú Principal</title>
     <link rel="stylesheet" href="{{ asset('css/styles_menu.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        /* Estilos para mejorar el botón de cierre de sesión */
         header .header-container form button {
-            background-color: #e74c3c;
-            color: white;
+            background-color: #f4b154ff;
+            color: black;
             border: none;
             padding: 8px 15px;
             border-radius: 4px;
@@ -26,44 +26,153 @@
             background-color: #c0392b;
         }
         
-        /* Mensaje de bienvenida */
         .welcome-message {
-            background-color: #d4edda;
-            color: #155724;
-            padding: 10px 15px;
-            margin: 10px;
+            background-color: #D7D7D7;
+            color: #273F4F;
+            padding: 20px 30px;
+            margin: 0 auto;
             border-radius: 4px;
-            border-left: 4px solid #28a745;
-            position: absolute;
-            top: 70px;
-            right: 20px;
+            border-left: 4px solid #447D9B;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             z-index: 100;
             display: none;
+            max-width: 80%;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
-        
-        /* Animación para el mensaje de bienvenida */
+
         .welcome-message.show {
             display: block;
-            animation: fadeOut 5s forwards;
+            animation: fadeInOut 4s forwards;
         }
         
-        @keyframes fadeOut {
-            0% { opacity: 1; }
-            70% { opacity: 1; }
-            100% { opacity: 0; }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            85% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg);}
+            100% { transform: rotate(360deg);}
+        }
+               
+        @media (max-width: 768px) {
+            #main-content {
+                background-position: top center;
+            }
+        }
+        
+        #spinner {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(255,255,255,0.8);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .spinner-circle {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background-color: #C57F1B;
+            color: #273F4F;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        #main-content {
+            height: 100%;
+            width: calc(100% - 250px);
+            background: #f5f5f5 url('{{ asset('images/fondo1.png') }}') no-repeat center center;
+            background-size: 110%;
+            background-position: center center;
+            position: fixed;
+            top: 80px;
+            left: 250px;
+            right: 0;
+            bottom: 0;
+            margin: 0;
+            padding: 0;
+            z-index: 1;
+        }
+
+        main {
+            position: relative;
+            height: calc(100vh - 80px);
+            margin: 0;
+            padding: 0;
+            margin-left: 250px;
+        }
+
+        /* Estilos para el overlay con claridad absoluta y scroll */
+        #main-content-overlay {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 30px auto;
+            width: 85%;
+            max-width: 1100px;
+            max-height: calc(100vh - 150px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            top: 10px;
+            z-index: 2000;
+            display: none;
+            pointer-events: auto !important;
+            overflow-y: auto !important;
+            overflow-x: hidden;
+        }
+
+        /* Forzar claridad en el contenido del overlay */
+        #main-content-overlay * {
+            pointer-events: auto !important;
+            cursor: pointer;
+        }
+
+        /* Estilos para elementos sin permisos */
+        .sin-permisos {
+            text-align: center;
+            padding: 50px 20px;
+            color: #666;
+            font-size: 18px;
+        }
+
+        .sin-permisos h3 {
+            color: #dc3545;
+            margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
     <header>
         <div class="header-container">
-            <h2>Bienvenido, {{ Auth::user()->name }}</h2>
-            <form action="{{ route('logout') }}" method="POST">
-                @csrf
+            <form action="{{ route('emergency.logout') }}" method="GET">
                 <button type="submit">Cerrar Sesión</button>
             </form>
-            <img src="{{ asset('images/logo.png') }}" alt="Logo" class="logo">
-            <h1 class="titulo-principal">Grupo Promocional Prestige</h1>
+            <h1 class="titulo-principal">Bienvenido</h1>
             <a href="#" class="notificaciones">
                 <img src="{{ asset('images/notificacion.png') }}" alt="Notificaciones" class="icono-notificaciones">
                 @if(isset($notificaciones) && $notificaciones->count() > 0)
@@ -73,105 +182,183 @@
         </div>
     </header>
     
-    <!-- Mensaje de bienvenida temporal -->
-    @if(session('success'))
+    {{-- Mensaje de bienvenida personalizado --}}
+    @if(isset($mensajeBienvenida))
         <div id="welcomeMessage" class="welcome-message">
-            {{ session('success') }}
+            {{ $mensajeBienvenida }}
+        </div>
+    @endif
+
+    {{-- Debug: Mostrar permisos del usuario (temporal) --}}
+    @if(config('app.debug') && isset($permisos) && count($permisos) > 0)
+        <div style="position: fixed; top: 90px; right: 10px; background: #fff; padding: 10px; border: 1px solid #ccc; z-index: 9999; font-size: 12px;">
+            <strong>Usuario:</strong> {{ $usuario->nombre ?? 'No definido' }}<br>
+            <strong>Permisos:</strong><br>
+            @foreach($permisos as $permiso => $valor)
+                {{ $permiso }}: {{ $valor ? '✅' : '❌' }}<br>
+            @endforeach
         </div>
     @endif
 
     <div class="menu-lateral">
-        <div class="menu-item">Personal
-            <div class="submenu-opciones">
-                <ul>
-                    <li><a href="{{ route('candidatos.index') }}">Candidatos</a></li>
-                    <li><a href="{{ route('empleados.index') }}">Empleados</a></li>
-                </ul>
+        {{-- Verificar si el usuario tiene ALGÚN permiso antes de mostrar el menú --}}
+        @php
+            $tieneAlgunPermiso = false;
+            $modulosConPermisos = ['candidatos', 'empleados', 'puestos', 'giros', 'clientes', 'documentos', 'asistencia', 'nomina', 'eliminados', 'usuarios', 'roles', 'contratos'];
+            
+            foreach($modulosConPermisos as $modulo) {
+                if(\App\Helpers\PermissionHelper::hasPermission($modulo, 'ver')) {
+                    $tieneAlgunPermiso = true;
+                    break;
+                }
+            }
+        @endphp
+
+        @if($tieneAlgunPermiso)
+            {{-- Sección Personal - Solo mostrar si tiene acceso a candidatos O empleados --}}
+            @if(\App\Helpers\PermissionHelper::hasPermission('candidatos', 'ver') || \App\Helpers\PermissionHelper::hasPermission('empleados', 'ver'))
+                <div class="menu-item">Personal
+                    <div class="submenu-opciones">
+                        <ul>
+                            @if(\App\Helpers\PermissionHelper::hasPermission('candidatos', 'ver'))
+                                <li><a href="{{ route('candidatos.index') }}" class="ajax-link">Candidatos</a></li>
+                            @endif
+                            @if(\App\Helpers\PermissionHelper::hasPermission('empleados', 'ver'))
+                                <li><a href="{{ route('empleados.index') }}" class="ajax-link">Empleados</a></li>
+                            @endif
+                        </ul>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Sección Reclutamiento - Solo mostrar si tiene acceso a puestos, giros O clientes --}}
+            {{-- CONTABILIDAD NO VERÁ ESTA SECCIÓN --}}
+            @if(\App\Helpers\PermissionHelper::hasPermission('puestos', 'ver') || \App\Helpers\PermissionHelper::hasPermission('giros', 'ver') || \App\Helpers\PermissionHelper::hasPermission('clientes', 'ver'))
+                <div class="menu-item">Reclutamiento
+                    <div class="submenu-opciones">
+                        <ul>
+                            @if(\App\Helpers\PermissionHelper::hasPermission('puestos', 'ver'))
+                                <li><a href="{{ route('puestos.index') }}" class="ajax-link">Puestos</a></li>
+                            @endif
+                            
+                            @if(\App\Helpers\PermissionHelper::hasPermission('giros', 'ver'))
+                                <li><a href="{{ route('giros.index') }}" class="ajax-link">Giros</a></li>
+                            @endif
+                            
+                            @if(\App\Helpers\PermissionHelper::hasPermission('clientes', 'ver'))
+                                <li><a href="{{ route('clientes.index') }}" class="ajax-link">Clientes</a></li>
+                            @endif
+                        </ul>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Sección Documentación - Solo mostrar si tiene acceso a documentos O contratos --}}
+            @if(\App\Helpers\PermissionHelper::hasPermission('documentos', 'ver') || \App\Helpers\PermissionHelper::hasPermission('contratos', 'ver'))
+                <div class="menu-item">Documentación
+                    <div class="submenu-opciones">
+                        <ul>
+                            @if(\App\Helpers\PermissionHelper::hasPermission('documentos', 'ver'))
+                                <li><a href="{{ route('documentos.index') }}" class="ajax-link">Entrada</a></li>
+                            @endif
+                            @if(\App\Helpers\PermissionHelper::hasPermission('contratos', 'ver'))
+                                {{-- Contratos aún no tiene ruta, mostrar como en desarrollo --}}
+                                <li><a href="#" onclick="alert('Módulo de Contratos en desarrollo')" class="ajax-link">Contratos</a></li>
+                            @endif
+                        </ul>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Sección Asistencia - Solo mostrar si tiene permisos --}}
+            {{-- CONTABILIDAD y RH pueden verlo, pero está en desarrollo --}}
+            @if(\App\Helpers\PermissionHelper::hasPermission('asistencia', 'ver'))
+                <div class="menu-item" onclick="alert('Módulo de Asistencia en desarrollo')">Asistencia</div>
+            @endif
+            
+            {{-- Sección Nómina - Solo mostrar si tiene permisos --}}
+            {{-- CONTABILIDAD y RH pueden verlo, pero está en desarrollo --}}
+            @if(\App\Helpers\PermissionHelper::hasPermission('nomina', 'ver'))
+                <div class="menu-item" onclick="alert('Módulo de Nómina en desarrollo')">Nómina</div>
+            @endif
+            
+            {{-- Sección Eliminados - Solo mostrar si tiene permisos --}}
+            {{-- Solo ADMIN y RH pueden verlo --}}
+            @if(\App\Helpers\PermissionHelper::hasPermission('eliminados', 'ver'))
+                <div class="menu-item" onclick="alert('Módulo de Eliminados en desarrollo')">Eliminados</div>
+            @endif
+
+            {{-- Sección Configuración - Solo mostrar si tiene acceso a usuarios O roles --}}
+            {{-- Solo ADMIN puede verlo, RH y CONTABILIDAD NO --}}
+            @if(\App\Helpers\PermissionHelper::hasPermission('usuarios', 'ver') || \App\Helpers\PermissionHelper::hasPermission('roles', 'ver'))
+                <div class="menu-item">Configuración
+                    <div class="submenu-opciones">
+                        <ul>
+                            @if(\App\Helpers\PermissionHelper::hasPermission('usuarios', 'ver'))
+                                <li><a href="{{ route('usuarios.index') }}" class="ajax-link">Usuarios</a></li>
+                            @endif
+                            
+                            @if(\App\Helpers\PermissionHelper::hasPermission('roles', 'ver'))
+                                <li><a href="{{ route('roles.index') }}" class="ajax-link">Roles</a></li>
+                            @endif
+                        </ul>
+                    </div>
+                </div>
+            @endif
+        @else
+            {{-- Mensaje cuando no tiene permisos --}}
+            <div class="sin-permisos">
+                <h3>🚫 Sin permisos asignados</h3>
+                <p>Contacta al administrador para obtener acceso a los módulos del sistema.</p>
             </div>
-        </div>
-        <div class="menu-item">Reclutamiento
-            <div class="submenu-opciones">
-                <ul>
-                    <li><a href="{{ route('puestos.index') }}">Puestos</a></li>
-                    <li><a href="{{ route('clientes.index') }}">Clientes</a></li>
-                    <li><a href="{{ route('giros.index') }}">Giros</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="menu-item">Documentación
-            <div class="submenu-opciones">
-                <ul>
-                    <li><a href="{{ route('documentos.index') }}">Documentos de entrada</a></li>
-                    <li><a href="#">Documentos de salida</a></li>
-                    <li><a href="{{ route('contratos.index') }}">Contratos</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="menu-item">Configuración
-            <div class="submenu-opciones">
-                <ul>
-                    <li><a href="{{ route('usuarios.index') }}">Usuarios</a></li>
-                    <li><a href="{{ route('roles.index') }}">Roles</a></li>
-                    @can('crear usuarios')
-                        <li><a href="{{ route('usuarios.create') }}">Registrar usuario</a></li>
-                    @endcan
-                </ul>
-            </div>
-        </div>
-         
-        <div class="menu-item">Progreso de empleado</div>
-        <div class="menu-item">Contabilidad
-            <div class="submenu-opciones">
-                <ul>
-                    <li><a href="#">Préstamos</a></li>
-                    <li><a href="#">Incidencias</a></li>
-                    <li><a href="#">Nóminas</a></li>
-                </ul>
-            </div>
-        </div>
+        @endif
     </div>
 
     <main>
-        <div class="carousel">
-            <img src="{{ asset('images/c1.png') }}" class="active">
-            <img src="{{ asset('images/c2.png') }}">
-            <img src="{{ asset('images/c3.png') }}">
-            <img src="{{ asset('images/c4.png') }}">
+        <div id="main-content">
+            <!-- La imagen está como fondo en CSS -->
+            <div id="main-content-overlay"></div>
         </div>
     </main>
 
+    <div id="spinner">
+        <div class="spinner-circle"></div>
+    </div>
+
+    {{-- TODO EL JAVASCRIPT ORIGINAL SIN CAMBIOS --}}
     <script>
-        // Carrusel de imágenes
-        let index = 0;
-        const images = document.querySelectorAll('.carousel img');
+        console.log("Documento cargado");
         
-        setInterval(() => {
-            images[index].classList.remove('active');
-            index = (index + 1) % images.length;
-            images[index].classList.add('active');
-        }, 3000);
-        
-        // Mostrar mensaje de bienvenida con animación
         $(document).ready(function() {
+            console.log("jQuery listo");
+            
+            // Mostrar mensaje de bienvenida personalizado
             if ($("#welcomeMessage").length) {
                 $("#welcomeMessage").addClass("show");
                 setTimeout(function() {
                     $("#welcomeMessage").remove();
-                }, 5000);
+                }, 4000); // Desaparece después de 4 segundos
             }
+
+            var img = new Image();
+            img.onload = function() {
+                console.log("✅ Imagen de fondo cargada correctamente:", this.src);
+            };
+            img.onerror = function() {
+                console.error("❌ Error al cargar la imagen de fondo:", this.src);
+            };
+            img.src = "{{ asset('images/fondo1.jpg') }}";
         });
         
-        // Prevenir navegación hacia atrás
         window.onload = function() {
             if (window.history && window.history.pushState) {
                 window.history.pushState('forward', null, window.location.href);
-                window.onpopstate = function() {
+                window.onpopstate = function () {
                     window.history.pushState('forward', null, window.location.href);
                 };
             }
         }
         
-        // Verificar timeout de sesión cada minuto
         setInterval(function() {
             $.ajax({
                 url: "{{ route('check.session') }}",
@@ -186,9 +373,8 @@
                     }
                 }
             });
-        }, 60000); // Verificar cada minuto
+        }, 60000);
         
-        // Actualizar tiempo de actividad con cada interacción
         $(document).on('click keypress mousemove', function() {
             $.ajax({
                 url: "{{ route('update.activity') }}",
@@ -199,15 +385,125 @@
             });
         });
         
-        // Expandir/contraer submenús
+        // Código para controlar los submenús - SOLO HOVER, SIN POSICIONAMIENTO
         document.querySelectorAll('.menu-item').forEach(item => {
-            item.addEventListener('click', function() {
-                // Toggle solo si tiene submenu
-                if (this.querySelector('.submenu-opciones')) {
-                    this.classList.toggle('active');
-                }
+            const submenu = item.querySelector('.submenu-opciones');
+            if (!submenu) return;
+            
+            // Solo manejamos el hover, el posicionamiento lo hace CSS
+            item.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = 'rgba(215, 215, 215, 0.3)';
+            });
+            
+            item.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = '';
             });
         });
+        
+        // FUNCIÓN PRINCIPAL PARA CARGAR CONTENIDO VIA AJAX
+        $(document).on('click', '.ajax-link', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            var url = $(this).attr('href');
+            
+            // Verificar que no sea un enlace vacío o hash
+            if (!url || url === '#' || url === 'javascript:void(0)') {
+                console.log('Enlace vacío o sin URL válida');
+                return false;
+            }
+            
+            console.log('🔗 Cargando URL via AJAX:', url);
+            $("#spinner").css('display', 'flex').fadeIn(150);
+            
+            $.ajax({
+                url: url,
+                type: 'GET',
+                cache: false,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(data) {
+                    console.log('✅ Contenido cargado exitosamente');
+                    displayContent(data);
+                    $("#spinner").fadeOut(150);
+                },
+                error: function(xhr, status, error) {
+                    console.error("❌ Error al cargar:", error);
+                    console.error("❌ Status:", status);
+                    console.error("❌ XHR Status:", xhr.status);
+                    console.error("❌ Response Text:", xhr.responseText);
+                    
+                    var errorMsg = '<div style="color:red;text-align:center;padding:30px;">';
+                    errorMsg += '<h3>Error al cargar el contenido</h3>';
+                    errorMsg += '<p><strong>Error:</strong> ' + error + '</p>';
+                    errorMsg += '<p><strong>Status:</strong> ' + xhr.status + '</p>';
+                    if (xhr.responseText) {
+                        errorMsg += '<p><strong>Respuesta del servidor:</strong></p>';
+                        errorMsg += '<pre style="background:#f5f5f5;padding:10px;text-align:left;font-size:12px;max-height:200px;overflow:auto;">' + xhr.responseText.substring(0, 1000) + '</pre>';
+                    }
+                    errorMsg += '</div>';
+                    
+                    $("#main-content-overlay").html(errorMsg);
+                    $("#main-content-overlay").css('display', 'block');
+                    $("#spinner").fadeOut(150);
+                }
+            });
+            
+            return false;
+        });
+
+        // Función para mostrar el contenido en el overlay
+        function displayContent(data) {
+            console.log('📄 Mostrando contenido en overlay');
+            
+            // Reiniciar completamente los estilos del overlay
+            $("#main-content-overlay").attr('style', '');
+            $("#main-content-overlay").css({
+                'background-color': '#ffffff',
+                'display': 'block',
+                'z-index': '9999',
+                'color': '#000000',
+                'max-height': 'calc(100vh - 150px)',
+                'overflow-y': 'auto', 
+                'overflow-x': 'hidden',
+                'pointer-events': 'auto',
+                'border-radius': '10px',
+                'padding': '30px',
+                'margin': '30px auto',
+                'width': '85%',
+                'max-width': '1100px',
+                'box-shadow': '0 4px 15px rgba(0, 0, 0, 0.3)',
+                'position': 'relative',
+                'top': '10px'
+            });
+            
+            // Insertar el contenido
+            $("#main-content-overlay").html(data);
+            
+            // Habilitar interacción
+            $("#main-content-overlay *").css({
+                'pointer-events': 'auto'
+            });
+            
+            // Forzar recálculo de scroll y reactivar eventos
+            setTimeout(function() {
+                $("#main-content-overlay").scrollTop(0);
+                
+                // Asegurar que todos los nuevos enlaces ajax-link funcionen
+                $("#main-content-overlay").find('.ajax-link').css({
+                    'pointer-events': 'auto',
+                    'cursor': 'pointer'
+                });
+                
+                console.log('🔄 Eventos AJAX reactivos para nuevos enlaces');
+            }, 50);
+        }
+
+        // TODO EL RESTO DEL JAVASCRIPT ORIGINAL...
+        // [Resto del código JavaScript sin modificaciones]
     </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

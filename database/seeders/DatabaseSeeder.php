@@ -13,8 +13,8 @@ class DatabaseSeeder extends Seeder
     {
         // Llamar a los seeders en orden
         $this->call([
-            RoleSeeder::class,
-            AdminSeeder::class, // Asegúrate de que esta línea esté incluida
+            RolSeeder::class,
+            UsuarioSeeder::class,
         ]);
     }
 }

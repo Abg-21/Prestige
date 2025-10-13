@@ -3,8 +3,9 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\App;
+use App\Helpers\PermissionHelper;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -13,9 +14,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        App::bind('role', function () {
-            return new Role();
-        });
+        // Eliminar esta línea problemática o corregirla
+        // App::bind('role', function () {
+        //     return new Role();
+        // });
     }
 
     /**
@@ -23,8 +25,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->app->bind('role', function ($app) {
-            return new Role();
+        // Directiva Blade para verificar permisos
+        Blade::directive('can', function ($expression) {
+            list($modulo, $accion) = explode(',', str_replace(['(', ')', "'", '"'], '', $expression));
+            return "<?php if(\\App\\Helpers\\PermissionHelper::hasPermission('$modulo', '$accion')): ?>";
+        });
+
+        Blade::directive('endcan', function () {
+            return '<?php endif; ?>';
         });
     }
 }

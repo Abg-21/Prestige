@@ -1,35 +1,172 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Rol</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <div class="container mt-5">
-        <h2 class="text-center">Editar Rol: {{ $role->name }}</h2>
-
-        <form action="{{ route('roles.update', $role->id) }}" method="POST" class="mt-4">
-            @csrf
-            @method('PUT')
-
-            <div class="mb-3">
-                <label class="form-label">Permisos</label>
-                <div class="form-check">
-                    @foreach($permissions as $permission)
-                    <input type="checkbox" name="permissions[]" value="{{ $permission->name }}"
-                    @if($role && method_exists($role, 'hasPermissionTo') && $role->hasPermissionTo($permission->name)) checked @endif
-                    class="form-check-input">
-
-                        <label class="form-check-label">{{ $permission->name }}</label><br>
-                    @endforeach
-                </div>
+<div style="padding: 20px;">
+    <h2 style="margin-bottom: 20px; color: rgb(0, 0, 0);">Editar Rol: {{ $rol->nombre }}</h2>
+    
+    <form id="form-rol" method="POST" action="{{ route('roles.update', $rol->id) }}">
+        @csrf
+        @method('PUT')
+        
+        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <!-- Información básica del rol -->
+            <div style="margin-bottom: 20px;">
+                <label for="nombre" style="display: block; margin-bottom: 5px; font-weight: bold;">Nombre del Rol:</label>
+                <input type="text" id="nombre" name="nombre" required 
+                       style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
+                       value="{{ old('nombre', $rol->nombre) }}">
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <label for="descripcion" style="display: block; margin-bottom: 5px; font-weight: bold;">Descripción:</label>
+                <textarea id="descripcion" name="descripcion" rows="2"
+                          style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">{{ old('descripcion', $rol->descripcion) }}</textarea>
             </div>
 
-            <button type="submit" class="btn btn-success">Actualizar</button>
-            <a href="{{ route('roles.index') }}" class="btn btn-secondary">Volver</a>
-        </form>
-    </div>
-</body>
-</html>
+            <!-- Matriz de permisos -->
+            <h3 style="margin-bottom: 15px; color: #447D9B;">Permisos por Módulo</h3>
+            
+            @php
+                $permisosActuales = $rol->permisos ?? [];
+            @endphp
+            
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
+                    <thead>
+                        <tr style="background: #447D9B; color: #fff;">
+                            <th style="padding: 12px; border: 1px solid #ddd; text-align: left; min-width: 150px;">Módulo</th>
+                            <th style="padding: 12px; border: 1px solid #ddd; text-align: center; width: 100px;">Ver</th>
+                            <th style="padding: 12px; border: 1px solid #ddd; text-align: center; width: 100px;">Crear</th>
+                            <th style="padding: 12px; border: 1px solid #ddd; text-align: center; width: 100px;">Editar</th>
+                            <th style="padding: 12px; border: 1px solid #ddd; text-align: center; width: 100px;">Eliminar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($modulos as $moduloKey => $moduloNombre)
+                            <tr style="background: {{ $loop->even ? '#f8f9fa' : '#fff' }};">
+                                <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">
+                                    {{ $moduloNombre }}
+                                </td>
+                                @foreach($acciones as $accionKey => $accionNombre)
+                                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
+                                        <input type="checkbox" 
+                                               name="permisos[{{ $moduloKey }}][{{ $accionKey }}]" 
+                                               value="1"
+                                               id="permiso_{{ $moduloKey }}_{{ $accionKey }}"
+                                               class="permiso-checkbox"
+                                               data-modulo="{{ $moduloKey }}"
+                                               data-accion="{{ $accionKey }}"
+                                               style="transform: scale(1.2);"
+                                               {{ isset($permisosActuales[$moduloKey][$accionKey]) && $permisosActuales[$moduloKey][$accionKey] ? 'checked' : '' }}>
+                                    </td>
+                                @endforeach
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Botones de acción rápida -->
+            <!-- ...acciones rápidas eliminadas... -->
+
+            <!-- Botones del formulario -->
+            <div style="margin-top: 30px; text-align: right;">
+                <button type="button" id="btn-cancelar" style="margin-right: 10px; padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Cancelar
+                </button>
+                <button type="submit" style="padding: 10px 20px; background: #C57F1B; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Actualizar Rol
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Interceptar el envío del formulario para usar AJAX
+    $('#form-rol').on('submit', function(e) {
+        e.preventDefault();
+        
+        var formData = $(this).serialize();
+        var actionUrl = $(this).attr('action');
+        
+        $.ajax({
+            url: actionUrl,
+            type: 'POST',
+            data: formData,
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Cargar la lista de roles usando el sistema del menú
+                    $.ajax({
+                        url: '{{ route("roles.index") }}',
+                        type: 'GET',
+                        cache: false,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        success: function(data) {
+                            // Usar la función displayContent del menú principal
+                            if (typeof displayContent === 'function') {
+                                displayContent(data);
+                            } else {
+                                // Fallback si displayContent no está disponible
+                                $("#main-content-overlay").html(data);
+                                $("#main-content-overlay").css('display', 'block');
+                            }
+                            
+                            // Mostrar mensaje de éxito
+                            if (typeof mostrarMensaje === 'function') {
+                                mostrarMensaje('Rol actualizado correctamente', 'success');
+                            } else {
+                                alert('Rol actualizado correctamente');
+                            }
+                        },
+                        error: function(xhr) {
+                            console.error('Error al cargar la lista de roles:', xhr.responseText);
+                            alert('Error al cargar la lista de roles');
+                        }
+                    });
+                } else {
+                    alert('Error al actualizar el rol: ' + (response.message || 'Error desconocido'));
+                }
+            },
+            error: function(xhr) {
+                console.error('Error:', xhr.responseText);
+                alert('Error al actualizar el rol');
+            }
+        });
+    });
+
+    // ...acciones rápidas eliminadas...
+
+    // Botón cancelar
+    $('#btn-cancelar').on('click', function(e) {
+        e.preventDefault();
+        
+        // Cargar la lista de roles
+        $.ajax({
+            url: '{{ route("roles.index") }}',
+            type: 'GET',
+            cache: false,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function(data) {
+                // Usar la función displayContent del menú principal
+                if (typeof displayContent === 'function') {
+                    displayContent(data);
+                } else {
+                    // Fallback si displayContent no está disponible
+                    $("#main-content-overlay").html(data);
+                    $("#main-content-overlay").css('display', 'block');
+                }
+            },
+            error: function(xhr) {
+                console.error('Error al cargar la lista de roles:', xhr.responseText);
+                alert('Error al cargar la lista de roles');
+            }
+        });
+    });
+});
+</script>

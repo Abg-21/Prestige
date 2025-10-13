@@ -11,10 +11,10 @@ return new class extends Migration
         Schema::create('documentos', function (Blueprint $table) {
             $table->id('idDocumento');
             $table->unsignedBigInteger('idEmpleadoFK'); // Llave foránea
-            $table->foreign('idEmpleadoFK')
-                  ->references('idEmpleado')
-                  ->on('empleados')
-                  ->onDelete('cascade');
+        $table->foreign('idEmpleadoFK')
+            ->references('IdEmpleados')
+            ->on('empleados')
+            ->onDelete('cascade');
             $table->enum('TipoArchivo', ['PDF']); // Solo tipo PDF
             $table->string('RutaArchivo'); // Ruta del archivo en el servidor
             $table->dateTime('FechaSubida');

@@ -13,6 +13,8 @@ class Puesto extends Model
         'Categoría', 'Puesto', 'Zona', 'Estado', 'Edad', 'Escolaridad', 'Experiencia', 'Conocimientos', 'Funciones',
         'Habilidades', 'P_Aux', 'S_Aux', 'T_Aux', 'id_GiroPuestoFK', 'id_ClientePuestoFK'
     ];
+    public $incrementing = true;
+    protected $keyType = 'int';
 
     public function giro()
     {

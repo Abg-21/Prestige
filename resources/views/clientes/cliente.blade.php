@@ -1,68 +1,194 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Clientes</title>
-    <link rel="stylesheet" href="{{ asset('css/st.css') }}">
+<div style="padding: 20px;">
+        <h2 style="margin-bottom: 20px; color:rgb(0, 0, 0);">Clientes
+           @if (App\Helpers\PermissionHelper::hasPermission('clientes', 'crear'))
+           <a href="{{ route('clientes.create') }}" class="btn btn-primary ajax-link" data-modal="false" style="margin-left: 15px; display: inline-flex; align-items: center; background-color: #C57F1B; border-color: #C57F1B;" title="Agregar cliente">
+                <img src="{{ asset('images/agregar-usuario.png') }}" alt="Agregar" style="width: 28px; height: 28px; vertical-align: middle;">
+            </a>
+           @endif
+        </h2>
+        @if($clientes->isEmpty())
+            <div style="padding: 20px; color: #e74c3c; font-weight: bold;">
+                No hay clientes registrados.
+            </div>
+        @else
+            <table style="width:100%; border-collapse: collapse; background: #fff;">
+                <thead>
+                    <tr style="background: #FE7743; color: #fff;">
+                        <th style="padding: 8px; border: 1px solid #ddd;">ID</th>
+                        <th style="padding: 8px; border: 1px solid #ddd;">Nombre</th>
+                        <th style="padding: 8px; border: 1px solid #ddd;">Teléfono</th>
+                        <th style="padding: 8px; border: 1px solid #ddd;">Descripción</th>
+                        <th style="padding: 8px; border: 1px solid #ddd;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($clientes as $cliente)
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #ddd;">{{ $cliente->idClientes }}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;">{{ $cliente->Nombre }}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;">{{ $cliente->Telefono }}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;">{{ $cliente->Descripcion }}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;">
+                                <div style="display: flex; gap: 24px;">
+                                    <a href="{{ route('clientes.edit', $cliente->idClientes) }}" class="ajax-link" style="text-align: center;">
+                                        <img src="{{ asset('images/editar.png') }}" alt="Editar" style="width: 32px; height: 32px;">
+                                        <div style="font-size: 13px; color: #555;">Editar</div>
+                                    </a>
+                                    <form action="{{ route('clientes.destroy', $cliente->idClientes) }}" method="POST" class="form-eliminar-cliente" style="display:inline-block; text-align: center;">
+                                        @if (App\Helpers\PermissionHelper::hasPermission('clientes', 'eliminar'))
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" 
+                                            data-id="{{ $cliente->idClientes }}"
+                                            style="background: none; border: none; padding: 0; cursor: pointer;">
+                                            <img src="{{ asset('images/eliminar.png') }}" alt="Eliminar" style="width: 32px; height: 32px;">
+                                            <div style="font-size: 13px; color: #e74c3c;">Eliminar</div>
+                                        </button>
+                                        @endif
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
+</div>
+
+<!-- Modal de confirmación de eliminación -->
+<div id="modal-confirmar-eliminar" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:#fff; padding:32px 24px; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,0.2); text-align:center; min-width:300px;">
+        <div style="font-size:18px; margin-bottom:24px;">¿Seguro que deseas eliminar al cliente?</div>
+        <button id="btn-confirmar-eliminar" style="padding:8px 24px; background:#e74c3c; color:#fff; border:none; border-radius:4px; margin-right:12px; cursor:pointer;">Sí, eliminar</button>
+        <button id="btn-cancelar-eliminar" style="padding:8px 24px; background:#447D9B; color: white; border:none; border-radius:4px; cursor:pointer;">Cancelar</button>
+    </div>
+</div>
 
 <style>
-       .home-icon {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-        }
+.alert-float {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 30px;
+    border-radius: 4px;
+    color: white;
+    font-weight: bold;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s ease;
+}
 
-        .home-icon img {
-            width: 25px;  /* Tamaño más pequeño */
-            height: auto;
-        }
-    </style>
-</head>
-<body>
-    <!-- Icono de hogar en la esquina superior izquierda -->
-    <a href="{{ route('menu') }}" class="home-icon">
-        <img src="{{ asset('images/hogar.png') }}" alt="Inicio">
-    </a>
+.alert-success {
+    background-color: #2ecc71;
+}
 
-    <h1>Lista de Clientes</h1>
+.alert-error {
+    background-color: #e74c3c;
+}
 
-    <button type="button" onclick="window.location.href='{{ route('clientes.create') }}'">Crear nuevo cliente</button>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Teléfono</th>
-                <th>Descripción</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($clientes as $cliente)
-            <tr>
-                <td>{{ $cliente->idClientes }}</td>
-                <td>{{ $cliente->Nombre }}</td>
-                <td>{{ $cliente->Telefono }}</td>
-                <td>{{ $cliente->Descripcion }}</td>
-                <td>
-                    <button type="button" onclick="window.location.href='{{ route('clientes.edit', ['cliente' => $cliente->idClientes]) }}'">Editar</button>
-                    <form id="deleteForm-{{ $cliente->idClientes }}" action="{{ route('clientes.destroy', ['cliente' => $cliente->idClientes]) }}" method="POST" style="display:inline;">
-                        @csrf
-                        @method('DELETE')
-                        <button type="button" onclick="confirmDelete({{ $cliente->idClientes }})">Eliminar</button>
-                    </form>
-                </td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
-    <script>
-        function confirmDelete(clienteId) {
-            if (confirm('El cliente está relacionado con uno o más puestos, ¿seguro que deseas eliminarlo?')) {
-                document.getElementById('deleteForm-' + clienteId).submit();
+.alert-float.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+</style>
+
+<script>
+function showAlert(message, type) {
+    // Remove any existing alerts
+    $('.alert-float').remove();
+    
+    // Create new alert
+    var alert = $('<div class="alert-float alert-' + type + '">' + message + '</div>');
+    $('body').append(alert);
+    
+    // Show alert
+    setTimeout(function() {
+        alert.addClass('show');
+    }, 10);
+    
+    // Remove alert after 2 seconds
+    setTimeout(function() {
+        alert.removeClass('show');
+        setTimeout(function() {
+            alert.remove();
+        }, 300);
+    }, 2000);
+}
+
+var formEliminarPendiente = null;
+
+// Mostrar modal al intentar eliminar
+$(document).on('submit', '.form-eliminar-cliente', function(e) {
+    e.preventDefault();
+    e.stopPropagation(); // Evitar que otros manejadores interfieran
+    
+    console.log('🗑️ Interceptando formulario de eliminación de cliente');
+    
+    formEliminarPendiente = $(this);
+    
+    // Mostrar el modal de confirmación
+    $('#modal-confirmar-eliminar').fadeIn(150).css('display', 'flex');
+    
+    return false; // Asegurar que no se procese el formulario
+});
+
+// Confirmar eliminación
+$(document).on('click', '#btn-confirmar-eliminar', function() {
+    if (!formEliminarPendiente) return;
+    
+    $.ajax({
+        url: formEliminarPendiente.attr('action'),
+        type: 'POST',
+        data: formEliminarPendiente.serialize(),
+        success: function(response) {
+            if (response.success) {
+                showAlert('Cliente eliminado correctamente', 'success');
+                setTimeout(function() {
+                    $.get("{{ route('clientes.index') }}", function(html) {
+                        $('#main-content-overlay').html(html);
+                    });
+                }, 1000);
+                $('#modal-confirmar-eliminar').fadeOut(150);
             }
+        },
+        error: function(xhr) {
+            if (xhr.status === 409 && xhr.responseJSON.confirm) {
+                $('#modal-confirmar-eliminar').fadeOut(150);
+                if (confirm(xhr.responseJSON.message)) {
+                    let newData = formEliminarPendiente.serialize() + '&force=true';
+                    $.ajax({
+                        url: formEliminarPendiente.attr('action'),
+                        type: 'POST',
+                        data: newData,
+                        success: function(response) {
+                            if (response.success) {
+                                showAlert('Cliente eliminado correctamente', 'success');
+                                setTimeout(function() {
+                                    $.get("{{ route('clientes.index') }}", function(html) {
+                                        $('#main-content-overlay').html(html);
+                                    });
+                                }, 1000);
+                            }
+                        },
+                        error: function() {
+                            showAlert('Hubo un error al intentar eliminar al cliente', 'error');
+                        }
+                    });
+                }
+            } else {
+                showAlert('Hubo un error al intentar eliminar al cliente', 'error');
+            }
+            $('#modal-confirmar-eliminar').fadeOut(150);
         }
-    </script>
-</body>
-</html>
+    });
+    
+    formEliminarPendiente = null;
+});
+
+// Cancelar eliminación
+$(document).on('click', '#btn-cancelar-eliminar', function() {
+    $('#modal-confirmar-eliminar').fadeOut(150);
+    formEliminarPendiente = null;
+});
+</script>

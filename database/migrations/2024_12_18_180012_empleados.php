@@ -8,34 +8,47 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::create('empleados', function (Blueprint $table) {
-            $table->id('idEmpleado');
-            $table->string('Nombre', 50);
-            $table->string('Apellido_P', 30);
-            $table->string('Apellido_M', 30);
-            $table->string('Telefono_M', 15)->nullable();
-            $table->string('Telefono_F', 15)->nullable();
-            $table->string('Ciudad', 30)->nullable();
-            $table->string('Estado', 30)->nullable();
-            $table->enum('Escolaridad', [
-                'Primaria', 'Secundaria terminada', 'Bachillerato trunco', 
-                'Bachillerato terminado', 'Técnico superior', 
-                'Licenciatura trunca', 'Licenciatura terminada', 'Postgrado'
+    Schema::create('empleados', function (Blueprint $table) {
+            $table->bigIncrements('IdEmpleados');
+            $table->string('Nombre', 25);
+            $table->string('Apellido_Paterno', 20);
+            $table->string('Apellido_Materno', 20);
+            $table->unsignedTinyInteger('Edad');
+            $table->string('Telefono', 15);
+            $table->enum('Estado', [
+                'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche', 'Chiapas', 'Chihuahua', 'Ciudad de México', 'Coahuila', 'Colima', 'Durango', 'Estado de México', 'Guanajuato', 'Guerrero', 'Hidalgo', 'Jalisco', 'Michoacán', 'Morelos', 'Nayarit', 'Nuevo León', 'Oaxaca', 'Puebla', 'Querétaro', 'Quintana Roo', 'San Luis Potosí', 'Sinaloa', 'Sonora', 'Tabasco', 'Tamaulipas', 'Tlaxcala', 'Veracruz', 'Yucatán', 'Zacatecas'
             ]);
-            $table->string('Correo', 30)->nullable();
-            $table->unsignedInteger('Experiencia'); // `unsigned` ya no es necesario por separado
-            $table->string('Comentarios', 50)->nullable();
-            $table->unsignedBigInteger('id_PuestoEmpleadoFK'); // Llave foránea
-            $table->foreign('id_PuestoEmpleadoFK')
+            $table->string('Ruta', 30)->nullable();
+            $table->enum('Escolaridad', [
+                'Primaria', 'Secundaria terminada', 'Bachillerato trunco', 'Bachillerato terminado', 'Técnico superior', 'Licenciatura trunca', 'Licenciatura terminada', 'Postgrado'
+            ]);
+            $table->string('Correo', 30);
+            $table->string('Experiencia', 10);
+            $table->date('Fecha_Ingreso');
+            $table->date('Fecha_Egreso')->nullable();
+            $table->string('Curp', 18)->nullable();
+            $table->string('NSS', 11)->nullable();
+            $table->string('RFC', 13)->nullable();
+            $table->string('Codigo_Postal', 5)->nullable();
+            $table->string('Folio', 10)->nullable();
+            $table->string('No_Cuenta', 10)->nullable();
+            $table->string('Tipo_Cuenta', 15)->nullable();
+            $table->decimal('Sueldo', 9, 2)->nullable();
+            $table->unsignedBigInteger('IdPuestoEmpleadoFK')->nullable();
+            $table->timestamp('Eliminado_en')->nullable();
+            $table->timestamps();
+
+            $table->foreign('IdPuestoEmpleadoFK')
                   ->references('idPuestos')
                   ->on('puestos')
-                  ->onDelete('cascade');
-            $table->timestamps();
+                  ->onDelete('set null')
+                  ->onUpdate('cascade');
         });
     }
 
     public function down()
     {
+        // Simplemente elimina la tabla, no necesitas eliminar columnas primero
         Schema::dropIfExists('empleados');
     }
 };

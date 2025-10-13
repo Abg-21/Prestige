@@ -26,7 +26,7 @@
             </div>
 
             <button type="submit" class="btn btn-success">Actualizar</button>
-            <a href="{{ route('usuarios.index') }}" class="btn btn-secondary">Volver</a>
+            <a href="{{ route('usuarios.index') }}" class="btn btn-secondary ajax-link">Volver</a>
         </form>
     </div>
 </body>

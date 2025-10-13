@@ -1,0 +1,4 @@
+<option value="">Seleccione un cliente</option>
+@foreach ($clientes as $cliente)
+    <option value="{{ $cliente->idClientes }}">{{ $cliente->Nombre }}</option>
+@endforeach

@@ -1,13 +1,13 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #FCE7C8;
+    background-color: #D7D7D7;
     margin: 0;
     display: flex;
 }
 
 header {
-    background-color: #F0A04B;
-    color: white;
+    background-color: #FE7743;
+    color: #273F4F;
     padding: 20px;
     display: flex;
     align-items: center;
@@ -30,9 +30,34 @@ header {
 }
 
 .titulo-principal {
-    font-size: 24px;
+    font-size: 42px; /* Tamaño más grande */
     font-weight: bold;
+    color: white; /* Color blanco */
     margin: 0;
+    text-transform: uppercase; /* Opcional: todo en mayúsculas para más impacto */
+    letter-spacing: 2px; /* Espaciado entre letras */
+    /* Efecto 3D con múltiples sombras */
+    text-shadow: 
+        0 1px 0 #ccc,
+        0 2px 0 #c9c9c9,
+        0 3px 0 #bbb,
+        0 4px 0 #b9b9b9,
+        0 5px 0 #aaa,
+        0 6px 1px rgba(0,0,0,.1),
+        0 0 5px rgba(0,0,0,.1),
+        0 1px 3px rgba(0,0,0,.3),
+        0 3px 5px rgba(0,0,0,.2),
+        0 5px 10px rgba(0,0,0,.25),
+        0 10px 10px rgba(0,0,0,.2),
+        0 20px 20px rgba(0,0,0,.15);
+    /* Animación sutil al cargar */
+    animation: titleAppear 1s ease-out;
+}
+
+/* Animación opcional para la aparición del título */
+@keyframes titleAppear {
+    0% { transform: translateY(-20px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
 }
 
 .notificaciones .icono-notificaciones {
@@ -54,7 +79,7 @@ header {
 }
 
 .menu-lateral {
-    background-color: #F0A04B;
+    background-color: rgba(39, 63, 79, 0.85);
     width: 250px;
     position: fixed;
     top: 80px;
@@ -63,6 +88,9 @@ header {
     padding: 20px 0;
     display: flex;
     flex-direction: column;
+    backdrop-filter: blur(5px);
+    z-index: 999;
+    height: calc(100vh - 80px);
 }
 
 .menu-item {
@@ -73,21 +101,30 @@ header {
 }
 
 .menu-item:hover {
-    background-color: #FADA7A;
+    background-color: rgba(215, 215, 215, 0.3);
+    color: white;
 }
 
+/* Estilos para submenús */
 .submenu-opciones {
     display: none;
-    background-color: #FADA7A;
+    background-color: rgba(68, 125, 155, 0.75);
     position: absolute;
     top: 0;
     left: 250px;
     width: 200px;
     border-radius: 8px;
-    padding: 10px;
+    padding: 0;
+    z-index: 9999;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    backdrop-filter: blur(5px);
 }
 
 .menu-item:hover .submenu-opciones {
+    display: block;
+}
+
+.submenu-opciones:hover {
     display: block;
 }
 
@@ -99,9 +136,21 @@ header {
 
 .submenu-opciones ul li a {
     text-decoration: none;
-    color: #333;
+    color: white;
     display: block;
-    padding: 5px 0;
+    padding: 15px 20px;
+    border-radius: 4px;
+    background-color: transparent;
+    font-weight: 500;
+    margin: 0;
+}
+
+.submenu-opciones ul li:first-child a {
+    padding-top: 15px; /* Asegurar que el primer elemento tenga el mismo padding que menu-item */
+}
+
+.submenu-opciones ul li a:hover {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 main {
