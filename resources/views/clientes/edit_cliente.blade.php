@@ -60,63 +60,108 @@
 }
 </style>
 
-    <script>
-    $(document).on('submit', '#form-editar-cliente', function(e) {
-        e.preventDefault();
-        var form = $(this);
+    <script type="text/javascript">
+    // Interceptar formulario de edición con JavaScript inmediato
+    (function() {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initEditFormHandler);
+        } else {
+            initEditFormHandler();
+        }
         
-        $.ajax({
-            url: form.attr('action'),
-            type: form.attr('method'),
-            data: form.serialize(),
-            success: function(response) {
-                if (response.success) {
-                    // Mostrar mensaje de éxito
-                    showAlert('Se guardaron los cambios correctamente', 'success');
-                    
-                    // Actualizar la vista con la lista de clientes
-                    setTimeout(function() {
-                        $.get("{{ route('clientes.index') }}", function(html) {
-                            $('#main-content-overlay').html(html);
-                        });
-                    }, 1000); // Espera 1 segundo para que se vea el mensaje
-                }
-            },
-            error: function(xhr) {
-                if(xhr.status === 422) {
-                    var errors = xhr.responseJSON.errors;
-                    var errorMsg = '';
-                    for (var key in errors) {
-                        errorMsg += errors[key][0] + '\n';
-                    }
-                    showAlert(errorMsg, 'error');
-                } else {
-                    showAlert('Error al guardar los cambios', 'error');
-                }
+        function initEditFormHandler() {
+            const form = document.getElementById('form-editar-cliente');
+            if (!form) {
+                console.log('Formulario de edición de cliente no encontrado');
+                return;
             }
-        });
-    });
-
-    function showAlert(message, type) {
-        // Remover alertas existentes
-        $('.alert-float').remove();
+            
+            console.log('Formulario de edición de cliente encontrado, configurando AJAX');
+            
+            form.onsubmit = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('¡FORMULARIO DE EDICIÓN DE CLIENTE INTERCEPTADO!');
+                
+                const formData = new FormData(form);
+                
+                // Cambiar botón a estado de carga
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Guardando...';
+                submitBtn.disabled = true;
+                
+                console.log('Enviando actualización de cliente...');
+                
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(function(response) {
+                    console.log('Respuesta de edición recibida:', response.status, response.statusText);
+                    
+                    // Si la respuesta es un redirect (302, 301, etc)
+                    if (response.redirected || response.status === 302 || response.status === 301) {
+                        console.log('Respuesta es redirect, cargando URL:', response.url);
+                        return fetch(response.url, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        }).then(res => res.text());
+                    }
+                    
+                    if (!response.ok) {
+                        throw new Error('Error HTTP: ' + response.status);
+                    }
+                    
+                    return response.text();
+                })
+                .then(function(html) {
+                    console.log('Cliente actualizado, HTML recibido:', html.length, 'caracteres');
+                    console.log('Primeros 200 caracteres:', html.substring(0, 200));
+                    
+                    // IMPORTANTE: Restaurar botón SIEMPRE
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                    
+                    // Actualizar con la lista de clientes
+                    const contenidoPrincipal = document.querySelector('#main-content-overlay');
+                    if (contenidoPrincipal) {
+                        contenidoPrincipal.innerHTML = html;
+                        mostrarNotificacion('Cliente actualizado correctamente', 'success');
+                    } else {
+                        console.error('No se encontró #main-content-overlay');
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error al actualizar cliente:', error);
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                    mostrarNotificacion('Error al actualizar el cliente: ' + error.message, 'error');
+                });
+                
+                return false;
+            };
+        }
         
-        // Crear nueva alerta
-        var alert = $('<div class="alert-float alert-' + type + '">' + message + '</div>');
-        $('body').append(alert);
-        
-        // Mostrar alerta
-        setTimeout(function() {
-            alert.addClass('show');
-        }, 10);
-        
-        // Remover alerta después de 2 segundos
-        setTimeout(function() {
-            alert.removeClass('show');
+        function mostrarNotificacion(mensaje, tipo) {
+            const div = document.createElement('div');
+            div.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000; padding: 15px; border-radius: 4px; color: white; font-weight: bold;';
+            div.style.backgroundColor = tipo === 'success' ? '#28a745' : '#dc3545';
+            div.textContent = mensaje;
+            
+            document.body.appendChild(div);
+            
             setTimeout(function() {
-                alert.remove();
-            }, 300);
-        }, 2000);
-    }
+                if (div.parentNode) {
+                    div.parentNode.removeChild(div);
+                }
+            }, 3000);
+        }
+    })();
     </script>
 

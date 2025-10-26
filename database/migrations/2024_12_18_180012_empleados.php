@@ -31,6 +31,7 @@ return new class extends Migration
             $table->string('RFC', 13)->nullable();
             $table->string('Codigo_Postal', 5)->nullable();
             $table->string('Folio', 10)->nullable();
+            $table->string('Codigo', 10)->nullable();
             $table->string('No_Cuenta', 10)->nullable();
             $table->string('Tipo_Cuenta', 15)->nullable();
             $table->decimal('Sueldo', 9, 2)->nullable();

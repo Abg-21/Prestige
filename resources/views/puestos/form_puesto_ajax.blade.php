@@ -3,6 +3,7 @@
     <h2 style="text-align: center; margin-bottom: 28px; color: #FE7743;">Crear Puesto</h2>
     <form id="form-crear-puesto" action="{{ route('puestos.store') }}" method="POST" autocomplete="off">
         @csrf
+        <input type="hidden" name="from_modal" value="1">
 
         <div style="display: flex; gap: 16px;">
             <div style="flex: 1;">
@@ -23,41 +24,35 @@
 
         <div style="margin-top: 18px;">
             <label>Giro:</label>
-            <div class="input-group mb-3">
-                <select id="selectGiro" name="id_GiroPuestoFK" class="form-select" required>
-                    <option value="" disabled {{ old('id_GiroPuestoFK') ? '' : 'selected' }}>Seleccione un giro</option>
-                    @foreach ($giros as $giro)
-                        <option value="{{ $giro->idGiros }}" {{ old('id_GiroPuestoFK') == $giro->idGiros ? 'selected' : '' }}>
-                            {{ $giro->Nombre }}
-                        </option>
-                    @endforeach
-                </select>
-                <button type="button" class="btn btn-secondary" id="btnNuevoGiro" style="margin-left: 8px;">Crear nuevo giro</button>
-            </div>
+            <select id="selectGiro" name="id_GiroPuestoFK" class="form-select" required>
+                <option value="" disabled {{ old('id_GiroPuestoFK') ? '' : 'selected' }}>Seleccione un giro</option>
+                @foreach ($giros as $giro)
+                    <option value="{{ $giro->idGiros }}" {{ old('id_GiroPuestoFK') == $giro->idGiros ? 'selected' : '' }}>
+                        {{ $giro->Nombre }}
+                    </option>
+                @endforeach
+            </select>
         </div>
 
         <div style="margin-top: 18px;">
             <label>Cliente:</label>
-            <div class="input-group mb-3">
-                <select id="selectCliente" name="id_ClientePuestoFK" class="form-select" required>
-                    <option value="" disabled {{ old('id_ClientePuestoFK') ? '' : 'selected' }}>Seleccione un cliente</option>
-                    @foreach ($clientes as $cliente)
-                        <option value="{{ $cliente->idClientes }}" {{ old('id_ClientePuestoFK') == $cliente->idClientes ? 'selected' : '' }}>
-                            {{ $cliente->Nombre }}
-                        </option>
-                    @endforeach
-                </select>
-                <button type="button" class="btn btn-secondary" id="btnNuevoCliente" style="margin-left: 8px;">Crear nuevo cliente</button>
-            </div>
+            <select id="selectCliente" name="id_ClientePuestoFK" class="form-select" required>
+                <option value="" disabled {{ old('id_ClientePuestoFK') ? '' : 'selected' }}>Seleccione un cliente</option>
+                @foreach ($clientes as $cliente)
+                    <option value="{{ $cliente->idClientes }}" {{ old('id_ClientePuestoFK') == $cliente->idClientes ? 'selected' : '' }}>
+                        {{ $cliente->Nombre }}
+                    </option>
+                @endforeach
+            </select>
         </div>
 
         <div style="display: flex; gap: 16px; margin-top: 18px;">
             <div style="flex: 1;">
-                <label>Zona:</label>
-                <input type="text" name="Zona" value="{{ old('Zona') }}" style="width: 100%;">
+                <label>Ruta:</label>
+                <input type="text" name="Zona" value="{{ old('Zona') }}" required style="width: 100%;">
             </div>
             <div style="flex: 1;">
-                <label>Estado:</label>
+                <label>Estado (Zona):</label>
                 <select name="Estado" required style="width: 100%;" class="form-select">
                     <option value="" disabled {{ old('Estado') ? '' : 'selected' }}>Seleccione un estado</option>
                     @php
@@ -117,8 +112,186 @@
             </div>
         </div>
 
+        <div style="margin-top: 18px;">
+            <label>Conocimientos:</label>
+            <div id="conocimientos-list-modal">
+                <div class="input-group mb-2">
+                    <input type="text" name="Conocimientos[]" class="form-control" value="" placeholder="Ingrese conocimiento">
+                    <button type="button" class="btn btn-danger remove-conocimiento-ajax">-</button>
+                </div>
+            </div>
+            <button type="button" id="add-conocimiento-ajax" class="btn btn-primary btn-sm mb-3">Agregar Conocimiento</button>
+        </div>
+
+        <div style="margin-top: 18px;">
+            <label>Funciones:</label>
+            <div id="funciones-list-modal">
+                <div class="input-group mb-2">
+                    <input type="text" name="Funciones[]" class="form-control" value="" placeholder="Ingrese función">
+                    <button type="button" class="btn btn-danger remove-funcion-ajax">-</button>
+                </div>
+            </div>
+            <button type="button" id="add-funcion-ajax" class="btn btn-primary btn-sm mb-3">Agregar Función</button>
+        </div>
+
+        <div style="margin-top: 18px;">
+            <label>Habilidades:</label>
+            <div id="habilidades-list-modal">
+                <div class="input-group mb-2">
+                    <input type="text" name="Habilidades[]" class="form-control" value="" placeholder="Ingrese habilidad">
+                    <button type="button" class="btn btn-danger remove-habilidad-ajax">-</button>
+                </div>
+            </div>
+            <button type="button" id="add-habilidad-ajax" class="btn btn-primary btn-sm mb-3">Agregar Habilidad</button>
+        </div>
+
         <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 28px;">
             <button type="submit" style="padding: 8px 20px; background: #FE7743; color: #fff; border: none; border-radius: 4px;">Guardar</button>
         </div>
     </form>
 </div>
+
+<script>
+// JavaScript específico para el modal de puestos
+$(document).ready(function() {
+    console.log('🔧 Configurando campos dinámicos del modal de puestos');
+    
+    // Función para agregar conocimientos en el modal
+    $('#add-conocimiento-ajax').off('click').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('📝 Agregando conocimiento en modal AJAX');
+        $('#conocimientos-list-modal').append(`
+            <div class="input-group mb-2">
+                <input type="text" name="Conocimientos[]" class="form-control" value="" placeholder="Ingrese conocimiento">
+                <button type="button" class="btn btn-danger remove-conocimiento-ajax">-</button>
+            </div>
+        `);
+    });
+    
+    // Función para remover conocimientos en el modal - Usar event delegation específico
+    $('#conocimientos-list-modal').off('click', '.remove-conocimiento-ajax').on('click', '.remove-conocimiento-ajax', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('🗑️ Removiendo conocimiento del modal AJAX');
+        // No permitir remover si es el último campo
+        if ($('#conocimientos-list-modal .input-group').length > 1) {
+            $(this).closest('.input-group').remove();
+        }
+    });
+
+    // Función para agregar funciones en el modal
+    $('#add-funcion-ajax').off('click').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('📝 Agregando función en modal AJAX');
+        $('#funciones-list-modal').append(`
+            <div class="input-group mb-2">
+                <input type="text" name="Funciones[]" class="form-control" value="" placeholder="Ingrese función">
+                <button type="button" class="btn btn-danger remove-funcion-ajax">-</button>
+            </div>
+        `);
+    });
+    
+    // Función para remover funciones en el modal - Usar event delegation específico
+    $('#funciones-list-modal').off('click', '.remove-funcion-ajax').on('click', '.remove-funcion-ajax', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('🗑️ Removiendo función del modal AJAX');
+        // No permitir remover si es el último campo
+        if ($('#funciones-list-modal .input-group').length > 1) {
+            $(this).closest('.input-group').remove();
+        }
+    });
+
+    // Función para agregar habilidades en el modal
+    $('#add-habilidad-ajax').off('click').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('📝 Agregando habilidad en modal AJAX');
+        $('#habilidades-list-modal').append(`
+            <div class="input-group mb-2">
+                <input type="text" name="Habilidades[]" class="form-control" value="" placeholder="Ingrese habilidad">
+                <button type="button" class="btn btn-danger remove-habilidad-ajax">-</button>
+            </div>
+        `);
+    });
+    
+    // Función para remover habilidades en el modal - Usar event delegation específico
+    $('#habilidades-list-modal').off('click', '.remove-habilidad-ajax').on('click', '.remove-habilidad-ajax', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('🗑️ Removiendo habilidad del modal AJAX');
+        // No permitir remover si es el último campo
+        if ($('#habilidades-list-modal .input-group').length > 1) {
+            $(this).closest('.input-group').remove();
+        }
+    });
+    
+    // Validación al enviar el formulario del modal
+    $('#form-crear-puesto').off('submit').on('submit', function(e) {
+        // Validar conocimientos
+        var conocimientosCompletos = 0;
+        $(this).find('input[name="Conocimientos[]"]').each(function() {
+            if ($.trim($(this).val()) !== '') {
+                conocimientosCompletos++;
+            }
+        });
+        
+        // Validar funciones
+        var funcionesCompletas = 0;
+        $(this).find('input[name="Funciones[]"]').each(function() {
+            if ($.trim($(this).val()) !== '') {
+                funcionesCompletas++;
+            }
+        });
+        
+        // Validar habilidades
+        var habilidadesCompletas = 0;
+        $(this).find('input[name="Habilidades[]"]').each(function() {
+            if ($.trim($(this).val()) !== '') {
+                habilidadesCompletas++;
+            }
+        });
+        
+        // Mostrar errores específicos si no hay campos llenos
+        var errores = [];
+        if (conocimientosCompletos === 0) {
+            errores.push('❌ Debe agregar al menos un conocimiento');
+        }
+        if (funcionesCompletas === 0) {
+            errores.push('❌ Debe agregar al menos una función');
+        }
+        if (habilidadesCompletas === 0) {
+            errores.push('❌ Debe agregar al menos una habilidad');
+        }
+        
+        if (errores.length > 0) {
+            e.preventDefault();
+            alert(errores[0]); // Mostrar el primer error
+            return false;
+        }
+        
+        // Si todo está bien, continuar con el envío
+        console.log('✅ Formulario modal válido, enviando...');
+    });
+    
+    // Asegurar que todos los inputs del formulario sean clickeables
+    setTimeout(function() {
+        $('#form-crear-puesto input, #form-crear-puesto select, #form-crear-puesto textarea').css({
+            'pointer-events': 'auto',
+            'user-select': 'text',
+            'cursor': 'text'
+        });
+        
+        $('#form-crear-puesto select').css({
+            'cursor': 'pointer'
+        });
+        
+        console.log('✅ Inputs del formulario habilitados correctamente');
+    }, 100);
+    
+    console.log('✅ Event listeners del modal AJAX configurados correctamente');
+});
+</script>
+

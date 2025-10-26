@@ -8,7 +8,11 @@ class Giro extends Model
 {
     use HasFactory;
 
+    protected $table = 'giros';
     protected $primaryKey = 'idGiros';
+    public $incrementing = true;
+    protected $keyType = 'int';
+    
     protected $fillable = ['Nombre', 'Descripcion'];
 
     public function puestos()

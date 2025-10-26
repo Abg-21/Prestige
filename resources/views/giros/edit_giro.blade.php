@@ -4,7 +4,7 @@
             Editar Giro
         </h2>
     </div>
-    <form id="form-editar-giro" action="{{ route('giros.update', ['giro' => $giro->idGiros]) }}" method="POST" autocomplete="off">
+    <form id="form-editar-giro" action="{{ route('giros.update', $giro->idGiros) }}" method="POST" autocomplete="off">
         @csrf
         @method('PUT')
 
@@ -62,44 +62,108 @@
 }
 </style>
 
-<script>
-function showAlert(message, type) {
-    $('.alert-float').remove();
-    var alert = $('<div class="alert-float alert-' + type + '">' + message + '</div>');
-    $('body').append(alert);
-    setTimeout(function() { alert.addClass('show'); }, 10);
-    setTimeout(function() {
-        alert.removeClass('show');
-        setTimeout(function() { alert.remove(); }, 300);
-    }, 2000);
-}
-
-$(document).on('submit', '#form-editar-giro', function(e) {
-    e.preventDefault();
-    var form = $(this);
-    var url = form.attr('action');
-    var data = form.serialize();
-
-    $.ajax({
-        url: url,
-        type: 'POST',
-        data: data,
-        success: function(response) {
-            showAlert('Se guardaron los cambios correctamente', 'success');
-            setTimeout(function() {
-                $.get("{{ route('giros.index') }}", function(html) {
-                    $('#main-content-overlay').html(html);
-                });
-            }, 1000);
-        },
-        error: function(xhr) {
-            let msg = 'Hubo un error al hacer los cambios';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                msg = xhr.responseJSON.message;
-            }
-            showAlert(msg, 'error');
+<script type="text/javascript">
+// Interceptar formulario de edición de giro con JavaScript inmediato
+(function() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initEditGiroFormHandler);
+    } else {
+        initEditGiroFormHandler();
+    }
+    
+    function initEditGiroFormHandler() {
+        const form = document.getElementById('form-editar-giro');
+        if (!form) {
+            console.log('Formulario de edición de giro no encontrado');
+            return;
         }
-    });
-});
+        
+        console.log('Formulario de edición de giro encontrado, configurando AJAX');
+        
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('¡FORMULARIO DE EDICIÓN DE GIRO INTERCEPTADO!');
+            
+            const formData = new FormData(form);
+            
+            // Cambiar botón a estado de carga
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Guardando...';
+            submitBtn.disabled = true;
+            
+            console.log('Enviando actualización de giro...');
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(function(response) {
+                console.log('Respuesta de edición de giro recibida:', response.status, response.statusText);
+                
+                // Si la respuesta es un redirect (302, 301, etc)
+                if (response.redirected || response.status === 302 || response.status === 301) {
+                    console.log('Respuesta es redirect, cargando URL:', response.url);
+                    return fetch(response.url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    }).then(res => res.text());
+                }
+                
+                if (!response.ok) {
+                    throw new Error('Error HTTP: ' + response.status);
+                }
+                
+                return response.text();
+            })
+            .then(function(html) {
+                console.log('Giro actualizado, HTML recibido:', html.length, 'caracteres');
+                console.log('Primeros 200 caracteres:', html.substring(0, 200));
+                
+                // IMPORTANTE: Restaurar botón SIEMPRE
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                
+                // Actualizar con la lista de giros
+                const contenidoPrincipal = document.querySelector('#main-content-overlay');
+                if (contenidoPrincipal) {
+                    contenidoPrincipal.innerHTML = html;
+                    mostrarNotificacion('Giro actualizado correctamente', 'success');
+                } else {
+                    console.error('No se encontró #main-content-overlay');
+                }
+            })
+            .catch(function(error) {
+                console.error('Error al actualizar giro:', error);
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                mostrarNotificacion('Error al actualizar el giro: ' + error.message, 'error');
+            });
+            
+            return false;
+        };
+    }
+    
+    function mostrarNotificacion(mensaje, tipo) {
+        const div = document.createElement('div');
+        div.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000; padding: 15px; border-radius: 4px; color: white; font-weight: bold;';
+        div.style.backgroundColor = tipo === 'success' ? '#28a745' : '#dc3545';
+        div.textContent = mensaje;
+        
+        document.body.appendChild(div);
+        
+        setTimeout(function() {
+            if (div.parentNode) {
+                div.parentNode.removeChild(div);
+            }
+        }, 3000);
+    }
+})();
 </script>
 

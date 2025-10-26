@@ -6,142 +6,223 @@ use App\Models\Empleado;
 use App\Models\Puesto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use App\Helpers\CacheHelper;
 
 class EmpleadoController extends Controller
 {
     public function index(Request $request)
     {
-        Log::info('Iniciando carga de empleados', ['is_ajax' => $request->ajax()]);
-        
         try {
-            $empleados = Empleado::with('puesto')->get();
+            // CACHE ULTRARRÁPIDO usando helper optimizado
+            $empleados = CacheHelper::getEmpleados();
             
-            Log::info('Empleados obtenidos exitosamente', ['count' => $empleados->count()]);
-            
-            if ($request->ajax()) {
-                return view('empleados.partials.index', compact('empleados'));
-            }
             return view('empleados.empleado', compact('empleados'));
             
         } catch (\Exception $e) {
-            Log::error('Error en index de empleados: ' . $e->getMessage());
-            
+            // Fallback sin cache
             $empleados = collect([]);
-            return view('empleados.empleado', compact('empleados'))
-                ->with('error', 'No se pudieron cargar los empleados en este momento.');
+            return view('empleados.empleado', compact('empleados'));
         }
     }
 
     public function create()
     {
-        $puestos = Puesto::all();
+        // CACHE ULTRARRÁPIDO
+        $puestos = CacheHelper::getPuestos();
         return view('empleados.create_empleado', compact('puestos'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'Nombre' => 'required|string|max:25',
-            'Apellido_Paterno' => 'required|string|max:20',
-            'Apellido_Materno' => 'required|string|max:20',
-            'Edad' => 'required|integer|min:18|max:99',
-            'Telefono' => 'required|string|max:15',
-            'Estado' => 'required|string',
-            'Ruta' => 'nullable|string|max:30',
-            'Escolaridad' => 'required|in:Primaria,Secundaria terminada,Bachillerato trunco,Bachillerato terminado,Técnico superior,Licenciatura trunca,Licenciatura terminada,Postgrado',
-            'Correo' => 'required|email|max:30',
-            'Experiencia' => 'required|string|max:10',
-            'Fecha_Ingreso' => 'required|date',
-            'Fecha_Egreso' => 'nullable|date',
-            'Curp' => 'nullable|string|max:18',
-            'NSS' => 'nullable|string|max:11',
-            'RFC' => 'nullable|string|max:13',
-            'Codigo_Postal' => 'nullable|string|max:5',
-            'Folio' => 'nullable|string|max:10',
-            'No_Cuenta' => 'nullable|string|max:10',
-            'Tipo_Cuenta' => 'nullable|string|max:15',
-            'Sueldo' => 'nullable|numeric',
-            'IdPuestoEmpleadoFK' => 'required|exists:puestos,idPuestos',
-        ]);
+        try {
+            $request->validate([
+                'Nombre' => 'required|string|max:25',
+                'Apellido_Paterno' => 'required|string|max:20',
+                'Apellido_Materno' => 'required|string|max:20',
+                'Edad' => 'required|integer|min:18|max:99',
+                'Telefono' => 'required|string|max:15',
+                'Estado' => 'required|string',
+                'Ruta' => 'nullable|string|max:30',
+                'Escolaridad' => 'required|in:Primaria,Secundaria terminada,Bachillerato trunco,Bachillerato terminado,Técnico superior,Licenciatura trunca,Licenciatura terminada,Postgrado',
+                'Correo' => 'required|email|max:30',
+                'Experiencia' => 'required|string|max:10',
+                'Fecha_Ingreso' => 'required|date',
+                'Fecha_Egreso' => 'nullable|date',
+                'Curp' => 'nullable|string|max:18',
+                'NSS' => 'nullable|string|max:11',
+                'RFC' => 'nullable|string|max:13',
+                'Codigo_Postal' => 'nullable|string|max:5',
+                'Folio' => 'nullable|string|max:10',
+                'Codigo' => 'nullable|string|max:20',
+                'No_Cuenta' => 'nullable|string|max:10',
+                'Tipo_Cuenta' => 'nullable|string|max:15',
+                'Sueldo' => 'nullable|numeric',
+                'IdPuestoEmpleadoFK' => 'required|exists:puestos,idPuestos',
+            ]);
 
-        $empleado = new Empleado($request->all());
-        $empleado->save();
+            $empleado = Empleado::create($request->all());
 
-        if ($request->ajax()) {
-            $empleados = Empleado::with('puesto')->get();
-            return view('empleados.partials.index', compact('empleados'));
+            // Limpiar cache después de crear
+            \Cache::forget('empleados_ultra_fast');
+            \Cache::forget('puestos_ultra_fast');
+
+            if ($request->ajax() || $request->wantsJson()) {
+                $empleados = \App\Models\Empleado::with('puesto')
+                    ->whereNull('Eliminado_en')
+                    ->orderBy('IdEmpleados', 'desc')
+                    ->get();
+                    
+                $html = view('empleados.empleado', compact('empleados'))
+                    ->with('success', 'Empleado creado correctamente')
+                    ->render();
+                    
+                return response($html)->header('Content-Type', 'text/html');
+            }
+
+            return redirect()->route('empleados.index')
+                ->with('success', 'Empleado creado exitosamente');
+                
+        } catch (\Exception $e) {
+            Log::error('Error al crear empleado: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Error al crear el empleado'])
+                        ->withInput();
         }
-
-        return redirect()->route('empleados.index')
-            ->with('success', 'Empleado creado exitosamente');
     }
 
     public function edit($id)
     {
-        $empleado = \App\Models\Empleado::findOrFail($id);
-        $puestos = Puesto::all();
+        $empleado = Empleado::findOrFail($id);
+        // CACHE ULTRARRÁPIDO
+        $puestos = CacheHelper::getPuestos();
         return view('empleados.edit_empleado', compact('empleado', 'puestos'));
     }
 
     public function update(Request $request, $id)
     {
-        $empleado = Empleado::findOrFail($id);
-        $request->validate([
-            'Nombre' => 'required|string|max:25',
-            'Apellido_Paterno' => 'required|string|max:20',
-            'Apellido_Materno' => 'required|string|max:20',
-            'Edad' => 'required|integer|min:18|max:99',
-            'Telefono' => 'required|string|max:15',
-            'Estado' => 'required|string',
-            'Ruta' => 'nullable|string|max:30',
-            'Escolaridad' => 'required|in:Primaria,Secundaria terminada,Bachillerato trunco,Bachillerato terminado,Técnico superior,Licenciatura trunca,Licenciatura terminada,Postgrado',
-            'Correo' => 'required|email|max:30',
-            'Experiencia' => 'required|string|max:10',
-            'Fecha_Ingreso' => 'required|date',
-            'Fecha_Egreso' => 'nullable|date',
-            'Curp' => 'nullable|string|max:18',
-            'NSS' => 'nullable|string|max:11',
-            'RFC' => 'nullable|string|max:13',
-            'Codigo_Postal' => 'nullable|string|max:5',
-            'Folio' => 'nullable|string|max:10',
-            'No_Cuenta' => 'nullable|string|max:10',
-            'Tipo_Cuenta' => 'nullable|string|max:15',
-            'Sueldo' => 'nullable|numeric',
-            'IdPuestoEmpleadoFK' => 'required|exists:puestos,idPuestos',
-        ]);
+        try {
+            $empleado = Empleado::findOrFail($id);
+            
+            $request->validate([
+                'Nombre' => 'required|string|max:25',
+                'Apellido_Paterno' => 'required|string|max:20',
+                'Apellido_Materno' => 'required|string|max:20',
+                'Edad' => 'required|integer|min:18|max:99',
+                'Telefono' => 'required|string|max:15',
+                'Estado' => 'required|string',
+                'Ruta' => 'nullable|string|max:30',
+                'Escolaridad' => 'required|in:Primaria,Secundaria terminada,Bachillerato trunco,Bachillerato terminado,Técnico superior,Licenciatura trunca,Licenciatura terminada,Postgrado',
+                'Correo' => 'required|email|max:30',
+                'Experiencia' => 'required|string|max:10',
+                'Fecha_Ingreso' => 'required|date',
+                'Fecha_Egreso' => 'nullable|date',
+                'Curp' => 'nullable|string|max:18',
+                'NSS' => 'nullable|string|max:11',
+                'RFC' => 'nullable|string|max:13',
+                'Codigo_Postal' => 'nullable|string|max:5',
+                'Folio' => 'nullable|string|max:10',
+                'Codigo' => 'nullable|string|max:20',
+                'No_Cuenta' => 'nullable|string|max:10',
+                'Tipo_Cuenta' => 'nullable|string|max:15',
+                'Sueldo' => 'nullable|numeric',
+                'IdPuestoEmpleadoFK' => 'required|exists:puestos,idPuestos',
+            ]);
 
-        $empleado->update($request->all());
+            $empleado->update($request->all());
 
-        if ($request->ajax()) {
-            $empleados = Empleado::with('puesto')->get();
-            return view('empleados.partials.index', compact('empleados'));
+            // Limpiar cache usando helper
+            CacheHelper::clearAll();
+
+            if ($request->ajax() || $request->wantsJson()) {
+                // Usar CacheHelper para obtener empleados actualizados
+                $empleados = CacheHelper::getEmpleados();
+                    
+                $html = view('empleados.empleado', compact('empleados'))
+                    ->with('success', "Empleado {$empleado->Nombre} {$empleado->Apellido_Paterno} actualizado correctamente")
+                    ->render();
+                    
+                return response($html)->header('Content-Type', 'text/html');
+            }
+
+            return redirect()->route('empleados.index')
+                ->with('success', 'Empleado actualizado exitosamente');
+                
+        } catch (\Exception $e) {
+            Log::error('Error al actualizar empleado: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Error al actualizar el empleado'])
+                        ->withInput();
         }
-
-        return redirect()->route('empleados.index')
-            ->with('success', 'Empleado actualizado exitosamente');
     }
 
-    public function destroy(Empleado $empleado)
+    public function destroy($id)
     {
-        // Set fecha_egreso before soft delete
-        $empleado->fecha_egreso = now();
-        $empleado->save();
-        
-        // Mark as eliminated
-        $empleado->darDeBaja();
+        try {
+            $empleado = Empleado::findOrFail($id);
+            $nombreCompleto = $empleado->Nombre . ' ' . $empleado->Apellido_Paterno;
+            
+            // Usar transacción para asegurar consistencia
+            \DB::transaction(function () use ($empleado) {
+                // Actualizar empleado con fecha de egreso y eliminación PRIMERO
+                $empleado->Fecha_Egreso = now();
+                $empleado->Eliminado_en = now();
+                $empleado->save();
+                
+                // Obtener un usuario válido para la FK
+                $usuarioId = \App\Models\Usuario::first()->id ?? null;
+                
+                // Solo registrar en eliminados si tenemos un usuario válido
+                if ($usuarioId) {
+                    \App\Models\Eliminado::create([
+                        'eliminable_type' => 'App\Models\Empleado',
+                        'eliminable_id' => $empleado->IdEmpleados,
+                        'tipo' => 'desactivacion',
+                        'motivo' => 'Empleado desactivado desde el sistema',
+                        'eliminado_en' => now(),
+                        'idUsuarioEliminadoFK' => $usuarioId
+                    ]);
+                }
+            });
 
-        if (request()->ajax()) {
-            $empleados = Empleado::with('puesto')->get();
-            return view('empleados.partials.index', compact('empleados'));
+            // Limpiar TODA la cache para forzar actualización
+            CacheHelper::clearAll();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                // Obtener empleados actualizados usando CacheHelper
+                $empleados = CacheHelper::getEmpleados();
+                    
+                $html = view('empleados.empleado', compact('empleados'))
+                    ->with('success', "Empleado {$nombreCompleto} desactivado correctamente")
+                    ->render();
+                    
+                return response($html)->header('Content-Type', 'text/html');
+            }
+
+            return redirect()->route('empleados.index')
+                ->with('success', 'Empleado desactivado exitosamente');
+                
+        } catch (\Exception $e) {
+            Log::error('Error al desactivar empleado: ' . $e->getMessage());
+            
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al desactivar el empleado: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return back()->withErrors(['error' => 'Error al desactivar el empleado: ' . $e->getMessage()]);
         }
-
-        return redirect()->route('empleados.index')
-            ->with('success', 'Empleado dado de baja exitosamente');
     }
 
-    public function show(Empleado $empleado)
+    public function show($id)
     {
-        return view('empleados.show_empleado', compact('empleado'));
+        try {
+            $empleado = Empleado::with('puesto')->findOrFail($id);
+            return view('empleados.show_empleado', compact('empleado'));
+        } catch (\Exception $e) {
+            Log::error('Error al mostrar empleado: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Error al cargar el empleado']);
+        }
     }
 }
 

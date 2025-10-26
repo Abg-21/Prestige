@@ -96,10 +96,17 @@
                 <td>
                     <input type="text" name="Folio" maxlength="10" style="width: 95%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </td>
+                <td style="font-weight:bold;">Código:</td>
+                <td>
+                    <input type="text" name="Codigo" maxlength="10" style="width: 95%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background-color: #f8f9fa;" placeholder="Código único">
+                </td>
+            </tr>
+            <tr>
                 <td style="font-weight:bold;">No. Cuenta:</td>
                 <td>
                     <input type="text" name="No_Cuenta" maxlength="10" style="width: 95%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </td>
+                <td colspan="2"></td>
             </tr>
             <tr>
                 <td style="font-weight:bold;">Tipo de Cuenta:</td>

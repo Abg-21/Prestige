@@ -26,7 +26,14 @@ class GiroController extends Controller
 
     public function store(Request $request)
     {
-        \Log::info('Store method iniciado', ['request_data' => $request->all(), 'is_ajax' => $request->ajax()]);
+        \Log::info('=== GIRO STORE INICIADO ===');
+        \Log::info('Datos del formulario giros:', $request->all());
+        \Log::info('Es AJAX?', [
+            'ajax()' => $request->ajax(),
+            'wantsJson()' => $request->wantsJson(), 
+            'X-Requested-With' => $request->header('X-Requested-With'),
+            'headers' => $request->headers->all()
+        ]);
         
         try {
             $messages = [
@@ -47,11 +54,16 @@ class GiroController extends Controller
 
             \Log::info('Giro creado exitosamente', ['giro' => $giro]);
 
-            if ($request->ajax()) {
-                \Log::info('Es request AJAX, retornando vista giros', []);
+            if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+                \Log::info('=== RESPUESTA AJAX GIRO ===');
                 // Para peticiones AJAX, devolver la vista completa de giros
                 $giros = Giro::paginate(10);
-                return view('giros.giro', compact('giros'))->with('success', 'Giro creado correctamente');
+                \Log::info('Giros obtenidos:', ['count' => $giros->count()]);
+                
+                $html = view('giros.giro', compact('giros'))->with('success', 'Giro creado correctamente')->render();
+                \Log::info('HTML giro generado:', ['length' => strlen($html), 'preview' => substr($html, 0, 200)]);
+                
+                return response($html)->header('Content-Type', 'text/html');
             }
 
             return redirect()->route('giros.index')
@@ -60,10 +72,10 @@ class GiroController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::warning('Error de validación', ['errors' => $e->errors()]);
             
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
                 \Log::info('Error de validación en AJAX', []);
-                $giros = Giro::paginate(10);
-                return view('giros.giro', compact('giros'))->withErrors($e->errors());
+                // Para AJAX, devolver la vista de crear giro con errores
+                return view('giros.create_giro')->withErrors($e->errors())->withInput($request->all());
             }
             
             return redirect()->back()->withErrors($e->errors())->withInput();
@@ -71,7 +83,7 @@ class GiroController extends Controller
         } catch (\Exception $e) {
             \Log::error('Error inesperado en store', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
                 \Log::info('Error inesperado en AJAX', []);
                 $giros = Giro::paginate(10);
                 return view('giros.giro', compact('giros'))->with('error', 'Error interno del servidor');
@@ -82,13 +94,16 @@ class GiroController extends Controller
     }
 
 
-    public function edit(Giro $giro)
+    public function edit($id)
     {
+        $giro = Giro::findOrFail($id);
         return view('giros.edit_giro', compact('giro'));
     }
 
-    public function update(Request $request, Giro $giro)
+    public function update(Request $request, $id)
     {
+        $giro = Giro::findOrFail($id);
+        
         $messages = [
             'Nombre.required' => 'El nombre del giro es obligatorio',
             'Nombre.unique' => 'El nombre ya está ocupado por otro giro',
@@ -103,10 +118,16 @@ class GiroController extends Controller
 
         $giro->update($validatedData);
 
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            \Log::info('=== UPDATE AJAX GIRO ===');
             // Para peticiones AJAX, devolver la vista completa de giros
             $giros = Giro::paginate(10);
-            return view('giros.giro', compact('giros'))->with('success', 'Giro actualizado correctamente');
+            \Log::info('Giros obtenidos para update:', ['count' => $giros->count()]);
+            
+            $html = view('giros.giro', compact('giros'))->with('success', 'Giro actualizado correctamente')->render();
+            \Log::info('HTML update giro generado:', ['length' => strlen($html), 'preview' => substr($html, 0, 200)]);
+            
+            return response($html)->header('Content-Type', 'text/html');
         }
 
         return redirect()->route('giros.index')

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Modal Puestos</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .test-container { margin: 20px; padding: 20px; border: 1px solid #ccc; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .warning { color: orange; font-weight: bold; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Test Modal Puestos - Verificación</h1>
+    
+    <div class="test-container">
+        <h2>1. Test de Elementos HTML</h2>
+        <div id="test-html-results"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>2. Test de JavaScript</h2>
+        <div id="test-js-results"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>3. Simulación de Modal</h2>
+        
+        <!-- Simular estructura del modal -->
+        <div id="modal-nuevo-puesto" style="display:none;">
+            <div id="modalPuestoContent">
+                <div id="conocimientos-list-modal">
+                    <div class="input-group mb-2">
+                        <input type="text" name="Conocimientos[]" class="form-control" value="">
+                        <button type="button" class="btn btn-danger remove-conocimiento-modal">-</button>
+                    </div>
+                </div>
+                <button type="button" id="add-conocimiento-modal">+ Conocimiento</button>
+                
+                <div id="funciones-list-modal">
+                    <div class="input-group mb-2">
+                        <input type="text" name="Funciones[]" class="form-control" value="">
+                        <button type="button" class="btn btn-danger remove-funcion-modal">-</button>
+                    </div>
+                </div>
+                <button type="button" id="add-funcion-modal">+ Función</button>
+                
+                <div id="habilidades-list-modal">
+                    <div class="input-group mb-2">
+                        <input type="text" name="Habilidades[]" class="form-control" value="">
+                        <button type="button" class="btn btn-danger remove-habilidad-modal">-</button>
+                    </div>
+                </div>
+                <button type="button" id="add-habilidad-modal">+ Habilidad</button>
+            </div>
+        </div>
+        
+        <!-- Simular select de puestos -->
+        <select id="selectPuesto">
+            <option value="">Seleccione un puesto</option>
+            <option value="1">Puesto 1</option>
+            <option value="2">Puesto 2</option>
+        </select>
+        
+        <button onclick="testModal()">Probar Modal</button>
+        <button onclick="testSelectUpdate()">Probar Actualización Select</button>
+        
+        <div id="test-modal-results"></div>
+    </div>
+
+    <script>
+    // Copiar función del proyecto
+    function configurarCamposDinamicosModal() {
+        console.log('🔧 Configurando campos dinámicos del modal');
+        
+        // Conocimientos
+        $('#add-conocimiento-modal').off('click').on('click', function() {
+            console.log('➕ Agregando campo conocimiento');
+            const container = $('#conocimientos-list-modal');
+            const newField = $(`
+                <div class="input-group mb-2">
+                    <input type="text" name="Conocimientos[]" class="form-control" value="">
+                    <button type="button" class="btn btn-danger remove-conocimiento-modal">-</button>
+                </div>
+            `);
+            container.append(newField);
+            updateResults('Campo conocimiento agregado correctamente', 'success');
+        });
+
+        // Funciones
+        $('#add-funcion-modal').off('click').on('click', function() {
+            console.log('➕ Agregando campo función');
+            const container = $('#funciones-list-modal');
+            const newField = $(`
+                <div class="input-group mb-2">
+                    <input type="text" name="Funciones[]" class="form-control" value="">
+                    <button type="button" class="btn btn-danger remove-funcion-modal">-</button>
+                </div>
+            `);
+            container.append(newField);
+            updateResults('Campo función agregado correctamente', 'success');
+        });
+
+        // Habilidades
+        $('#add-habilidad-modal').off('click').on('click', function() {
+            console.log('➕ Agregando campo habilidad');
+            const container = $('#habilidades-list-modal');
+            const newField = $(`
+                <div class="input-group mb-2">
+                    <input type="text" name="Habilidades[]" class="form-control" value="">
+                    <button type="button" class="btn btn-danger remove-habilidad-modal">-</button>
+                </div>
+            `);
+            container.append(newField);
+            updateResults('Campo habilidad agregado correctamente', 'success');
+        });
+
+        // Eventos para remover campos
+        $(document).off('click', '.remove-conocimiento-modal, .remove-funcion-modal, .remove-habilidad-modal')
+                  .on('click', '.remove-conocimiento-modal, .remove-funcion-modal, .remove-habilidad-modal', function() {
+            console.log('➖ Removiendo campo dinámico');
+            const container = $(this).closest('div[id$="-list-modal"]');
+            if (container.find('.input-group').length > 1) {
+                $(this).closest('.input-group').remove();
+                updateResults('Campo removido correctamente', 'success');
+            } else {
+                console.log('⚠️ No se puede eliminar el último campo');
+                updateResults('No se puede eliminar el último campo', 'warning');
+            }
+        });
+        
+        console.log('✅ Campos dinámicos configurados');
+        updateResults('Campos dinámicos configurados exitosamente', 'success');
+    }
+
+    function updateResults(message, type) {
+        const results = $('#test-modal-results');
+        results.append(`<div class="${type}">${message}</div>`);
+    }
+
+    function testModal() {
+        updateResults('=== INICIANDO TEST DEL MODAL ===', 'info');
+        $('#modal-nuevo-puesto').show();
+        configurarCamposDinamicosModal();
+        updateResults('Modal configurado. Prueba los botones +/- arriba.', 'info');
+    }
+
+    function testSelectUpdate() {
+        updateResults('=== TEST ACTUALIZACIÓN SELECT ===', 'info');
+        const $select = $('#selectPuesto');
+        
+        // Simular nuevas opciones
+        const newHTML = `
+            <option value="">Seleccione un puesto</option>
+            <option value="1">Puesto 1</option>
+            <option value="2">Puesto 2</option>
+            <option value="3">Nuevo Puesto Creado</option>
+        `;
+        
+        $select.html(newHTML);
+        $select.val('3');
+        
+        if ($select.val() == '3') {
+            updateResults('✅ Select actualizado y valor seleccionado correctamente', 'success');
+        } else {
+            updateResults('❌ Error al seleccionar valor en el select', 'error');
+        }
+    }
+
+    // Test inicial al cargar
+    $(document).ready(function() {
+        $('#test-html-results').html(`
+            <div class="success">✅ jQuery cargado correctamente</div>
+            <div class="success">✅ Elementos del modal encontrados: ${$('#modal-nuevo-puesto').length}</div>
+            <div class="success">✅ Select de puestos encontrado: ${$('#selectPuesto').length}</div>
+            <div class="success">✅ Botones dinámicos encontrados: ${$('[id^="add-"][id$="-modal"]').length}</div>
+        `);
+        
+        $('#test-js-results').html(`
+            <div class="success">✅ Función configurarCamposDinamicosModal disponible</div>
+            <div class="info">ℹ️ Listo para pruebas</div>
+        `);
+    });
+    </script>
+</body>
+</html>

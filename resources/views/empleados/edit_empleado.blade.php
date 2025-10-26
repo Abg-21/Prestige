@@ -97,10 +97,17 @@
                 <td>
                     <input type="text" name="Folio" value="{{ $empleado->Folio }}" maxlength="10" style="width: 95%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </td>
+                <td style="font-weight:bold;">Código:</td>
+                <td>
+                    <input type="text" name="Codigo" value="{{ $empleado->Codigo }}" maxlength="10" style="width: 95%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background-color: #f8f9fa;" placeholder="Código único">
+                </td>
+            </tr>
+            <tr>
                 <td style="font-weight:bold;">No. Cuenta:</td>
                 <td>
                     <input type="text" name="No_Cuenta" value="{{ $empleado->No_Cuenta }}" maxlength="10" style="width: 95%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </td>
+                <td colspan="2"></td>
             </tr>
             <tr>
                 <td style="font-weight:bold;">Tipo de Cuenta:</td>
@@ -124,7 +131,7 @@
             </tr>
         </table>
         <div style="margin-top: 36px; text-align: right;">
-            <button type="button" onclick="window.history.back()" class="ajax-link" 
+            <button type="button" onclick="cargarEmpleados()" 
                     style="padding: 10px 24px; background: #e74c3c; color: #fff; border: none; border-radius: 4px; margin-right: 10px;">
                 Cancelar
             </button>
@@ -136,19 +143,59 @@
     </form>
 </div>
 <script>
+function cargarEmpleados() {
+    $.ajax({
+        url: '{{ route('empleados.index') }}',
+        type: 'GET',
+        success: function(response) {
+            $('#main-content-overlay').html(response);
+        },
+        error: function(xhr) {
+            alert('Error al cargar la lista de empleados');
+        }
+    });
+}
+
 $('#form-editar-empleado').on('submit', function(e) {
     e.preventDefault();
     var form = $(this);
+    
+    // Mostrar que se está procesando
+    $('button[type="submit"]').prop('disabled', true).text('Guardando...');
+    
     $.ajax({
         url: form.attr('action'),
         type: 'POST',
         data: form.serialize(),
         success: function(response) {
-            alert('Empleado actualizado exitosamente');
-            $('.ajax-link[href="{{ route('empleados.index') }}"]').click();
+            $('#main-content-overlay').html(response);
         },
-        error: function(xhr) {
-            alert('Error al actualizar el empleado');
+        error: function(xhr, status, error) {
+            console.error('Error al actualizar empleado:', xhr);
+            console.error('Status:', status);
+            console.error('Error:', error);
+            console.error('Response Text:', xhr.responseText);
+            
+            let errorMsg = 'Error al actualizar el empleado';
+            
+            if (xhr.responseJSON && xhr.responseJSON.errors) {
+                const errors = Object.values(xhr.responseJSON.errors).flat();
+                errorMsg += ':\n' + errors.join('\n');
+            } else if (xhr.responseText) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.message) {
+                        errorMsg += ': ' + response.message;
+                    }
+                } catch (e) {
+                    errorMsg += '. Ver consola para más detalles.';
+                }
+            }
+            
+            alert(errorMsg);
+            
+            // Restaurar botón
+            $('button[type="submit"]').prop('disabled', false).text('Guardar cambios');
         }
     });
 });

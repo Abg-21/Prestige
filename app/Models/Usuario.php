@@ -52,6 +52,18 @@ class Usuario extends Authenticatable
         return $this->correo;
     }
 
+    // Especificar el campo que se usa como username/email para la autenticación
+    public function getAuthIdentifierName()
+    {
+        return 'correo';
+    }
+
+    // Obtener el identificador único para la autenticación
+    public function getAuthIdentifier()
+    {
+        return $this->correo;
+    }
+
     // Relación con roles (muchos a muchos)
     public function roles()
     {

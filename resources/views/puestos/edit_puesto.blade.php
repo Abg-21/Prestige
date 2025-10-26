@@ -224,33 +224,112 @@ function showAlert(message, type) {
     }, 2000);
 }
 
-$('#formEditarPuesto').on('submit', function(e) {
-    e.preventDefault();
-    var form = $(this);
+// Interceptar formulario con JavaScript inmediato para puestos
+(function() {
+    // Esperar a que el DOM esté listo
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPuestoFormHandler);
+    } else {
+        initPuestoFormHandler();
+    }
     
-    $.ajax({
-        url: form.attr('action'),
-        type: 'POST',
-        data: form.serialize(),
-        success: function(response) {
-            if (response.success) {
-                // First load the index page
-                $.get("{{ route('puestos.index') }}", function(html) {
-                    $('#main-content-overlay').html(html);
-                    // Then show the success message
-                    showAlert('Se guardaron los datos correctamente', 'success');
-                });
-            }
-        },
-        error: function(xhr) {
-            let msg = 'Hubo un error al actualizar el puesto';
-            if (xhr.responseJSON && xhr.responseJSON.errors) {
-                msg = Object.values(xhr.responseJSON.errors)[0];
-            }
-            showAlert(msg, 'error');
+    function initPuestoFormHandler() {
+        const form = document.getElementById('formEditarPuesto');
+        if (!form) {
+            console.log('Formulario de puesto no encontrado');
+            return;
         }
-    });
-});
+        
+        console.log('Formulario de puesto encontrado, configurando AJAX');
+        
+        // Prevenir submit por defecto
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('¡FORMULARIO DE PUESTO INTERCEPTADO CON AJAX!');
+            
+            // Obtener datos del formulario
+            const formData = new FormData(form);
+            
+            // Cambiar botón a estado de carga
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Guardando...';
+            submitBtn.disabled = true;
+            
+            console.log('Enviando petición AJAX de puesto...');
+            
+            // Hacer petición AJAX
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(function(response) {
+                console.log('Respuesta de puesto recibida:', response.status, response.statusText);
+                
+                // Si la respuesta es un redirect (302, 301, etc)
+                if (response.redirected || response.status === 302 || response.status === 301) {
+                    console.log('Respuesta es redirect, cargando URL:', response.url);
+                    return fetch(response.url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    }).then(res => res.text());
+                }
+                
+                if (!response.ok) {
+                    throw new Error('Error HTTP: ' + response.status);
+                }
+                
+                return response.text();
+            })
+            .then(function(html) {
+                console.log('Puesto actualizado, HTML recibido:', html.length, 'caracteres');
+                console.log('Primeros 200 caracteres:', html.substring(0, 200));
+                
+                // IMPORTANTE: Restaurar botón SIEMPRE
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                
+                // Actualizar con la lista de puestos
+                const contenidoPrincipal = document.querySelector('#main-content-overlay');
+                if (contenidoPrincipal) {
+                    contenidoPrincipal.innerHTML = html;
+                    mostrarNotificacionPuesto('Puesto actualizado correctamente', 'success');
+                } else {
+                    console.error('No se encontró #main-content-overlay');
+                }
+            })
+            .catch(function(error) {
+                console.error('Error al actualizar puesto:', error);
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                mostrarNotificacionPuesto('Error al actualizar el puesto: ' + error.message, 'error');
+            });
+            
+            return false;
+        };
+    }
+    
+    function mostrarNotificacionPuesto(mensaje, tipo) {
+        const div = document.createElement('div');
+        div.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000; padding: 15px; border-radius: 4px; color: white; font-weight: bold;';
+        div.style.backgroundColor = tipo === 'success' ? '#28a745' : '#dc3545';
+        div.textContent = mensaje;
+        
+        document.body.appendChild(div);
+        
+        setTimeout(function() {
+            if (div.parentNode) {
+                div.parentNode.removeChild(div);
+            }
+        }, 3000);
+    }
+})();
 
 // Agregar y eliminar dinámicamente conocimientos, funciones y habilidades
 function initDynamicFields() {

@@ -39,7 +39,7 @@ class AuthController extends Controller
 
             $credentials = [
                 'correo' => $request->email,
-                'password' => $request->password
+                'contraseña' => $request->password
             ];
             
             // Buscar usuario que no esté eliminado
@@ -53,13 +53,27 @@ class AuthController extends Controller
                 ])->withInput($request->only('email'));
             }
             
-            if (Auth::attempt($credentials)) {
+            // Verificación manual de credenciales debido a campos personalizados
+            if ($usuario && Hash::check($request->password, $usuario->contraseña)) {
+                // Autenticar manualmente al usuario
+                Auth::login($usuario);
                 $request->session()->regenerate();
+                
                 return redirect()->intended(route('menu'));
             }
 
+            // Debug detallado para identificar el problema
+            $debugInfo = [
+                'usuario_encontrado' => $usuario ? 'SÍ' : 'NO',
+                'email_buscado' => $request->email,
+                'password_hash_check' => $usuario ? Hash::check($request->password, $usuario->contraseña) : 'N/A'
+            ];
+            
+            Log::info('Login fallido - Debug:', $debugInfo);
+
             return back()->withErrors([
-                'email' => 'Las credenciales no coinciden.',
+                'email' => 'Las credenciales no coinciden. Usuario: ' . ($usuario ? 'encontrado' : 'NO encontrado') . 
+                          ($usuario ? ', Password: ' . (Hash::check($request->password, $usuario->contraseña) ? 'correcto' : 'incorrecto') : ''),
             ])->withInput($request->only('email'));
 
         } catch (\Exception $e) {

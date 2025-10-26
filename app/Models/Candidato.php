@@ -42,7 +42,7 @@ class Candidato extends Model
 
     public function puesto()
     {
-        return $this->belongsTo(Puesto::class, 'id_PuestoCandidatoFK', 'idPuestos');
+        return $this->belongsTo(Puesto::class, 'IdPuestoCandidatoFK', 'idPuestos');
     }
 
     public function eliminacion()
@@ -52,24 +52,24 @@ class Candidato extends Model
 
     public function scopeEliminados($query)
     {
-        return $query->whereNotNull('eliminado_en');
+        return $query->whereNotNull('Eliminado_en');
     }
 
     public function scopeActivos($query)
     {
-        return $query->whereNull('eliminado_en');
+        return $query->whereNull('Eliminado_en');
     }
 
     public function darDeBaja($motivo = null)
     {
         // Usamos eliminado_en en lugar de activo
-        $this->eliminado_en = now();
+        $this->Eliminado_en = now();
         $this->save();
         
         // Añadimos el campo tipo que es obligatorio
         Eliminado::create([
             'eliminable_type' => 'App\Models\Candidato',
-            'eliminable_id' => $this->idCandidatos,
+            'eliminable_id' => $this->IdCandidatos,
             'tipo' => 'Candidato', // Campo requerido que faltaba
             'motivo' => $motivo,
             'eliminado_en' => now(),
@@ -80,7 +80,7 @@ class Candidato extends Model
     public function restaurar()
     {
         // Usamos eliminado_en en lugar de activo
-        $this->eliminado_en = null;
+        $this->Eliminado_en = null;
         $this->save();
         
         // Actualizar el registro en Eliminados

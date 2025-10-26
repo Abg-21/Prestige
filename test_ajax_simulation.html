@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test AJAX</title>
+    <meta name="csrf-token" content="test-token">
+</head>
+<body>
+    <h1>Test AJAX</h1>
+    
+    <div class="contenido-principal">
+        <p>Contenido original - será reemplazado por AJAX</p>
+    </div>
+
+    <form id="test-form" action="/test" method="POST">
+        <input name="Nombre" value="Test Cliente" />
+        <button type="submit">Guardar</button>
+    </form>
+
+    <div id="logs"></div>
+
+    <script>
+        // Simular exactamente el JavaScript que tenemos
+        function log(msg) {
+            console.log(msg);
+            document.getElementById('logs').innerHTML += '<p>' + msg + '</p>';
+        }
+
+        (function() {
+            const form = document.getElementById('test-form');
+            
+            form.onsubmit = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                log('¡FORMULARIO INTERCEPTADO CON AJAX!');
+                
+                const formData = new FormData(form);
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Guardando...';
+                submitBtn.disabled = true;
+                
+                log('Enviando petición AJAX...');
+                
+                // Simular respuesta exitosa después de 2 segundos
+                setTimeout(function() {
+                    log('Respuesta recibida: 200 OK');
+                    
+                    const simulatedHTML = '<h2>Lista Actualizada</h2><p>Nuevo contenido después de AJAX</p>';
+                    log('HTML recibido, longitud: ' + simulatedHTML.length);
+                    log('Primeros 50 caracteres: ' + simulatedHTML.substring(0, 50));
+                    
+                    // IMPORTANTE: Restaurar botón SIEMPRE
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                    log('Botón restaurado');
+                    
+                    // Actualizar contenido
+                    const contenidoPrincipal = document.querySelector('.contenido-principal');
+                    if (contenidoPrincipal) {
+                        contenidoPrincipal.innerHTML = simulatedHTML;
+                        log('Contenido actualizado exitosamente');
+                    } else {
+                        log('ERROR: No se encontró .contenido-principal');
+                    }
+                    
+                }, 2000);
+                
+                return false;
+            };
+        })();
+    </script>
+</body>
+</html>

@@ -116,6 +116,11 @@ function showAlert(message, type) {
 
 // Mostrar alerta si viene de una creación exitosa
 $(document).ready(function() {
+    console.log('✅ jQuery cargado en puestos - versión:', $.fn.jquery);
+    console.log('🔍 Verificando elementos de eliminación...');
+    console.log('  - Botones eliminar encontrados:', $('.btn-eliminar-puesto').length);
+    console.log('  - Modal confirmar encontrado:', $('#modal-confirmar-eliminar').length > 0 ? 'SÍ' : 'NO');
+    
     @if(session('success'))
         showAlert('{{ session('success') }}', 'success');
     @endif
@@ -125,35 +130,61 @@ var puestoIdPendiente = null;
 
 $(document).on('click', '.btn-eliminar-puesto', function(e) {
     e.preventDefault();
+    console.log('🗑️ BOTÓN ELIMINAR CLICKEADO');
     puestoIdPendiente = $(this).data('id');
+    console.log('📝 ID del puesto a eliminar:', puestoIdPendiente);
     $('#modal-confirmar-eliminar').fadeIn(150).css('display', 'flex');
+    console.log('⚠️ Modal de confirmación mostrado');
 });
 
 $(document).on('click', '#btn-confirmar-eliminar', function() {
-    if (!puestoIdPendiente) return;
+    console.log('✅ CONFIRMACIÓN DE ELIMINACIÓN');
+    if (!puestoIdPendiente) {
+        console.error('❌ No hay ID de puesto pendiente');
+        return;
+    }
+    
+    console.log('📤 Enviando petición DELETE para ID:', puestoIdPendiente);
     
     $.ajax({
-        url: "{{ url('puestos') }}/" + puestoIdPendiente,
+        url: "/debug-ajax/eliminate",
         type: 'POST',
         data: {
             _token: '{{ csrf_token() }}',
-            _method: 'DELETE'
+            puesto_id: puestoIdPendiente
+        },
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        beforeSend: function() {
+            console.log('⏳ Enviando petición de eliminación...');
         },
         success: function(response) {
+            console.log('✅ Respuesta de eliminación exitosa:', response);
             if (response.success) {
                 showAlert('Puesto eliminado correctamente', 'success');
-                setTimeout(function() {
-                    $.get("{{ route('puestos.index') }}", function(html) {
-                        $('#main-content-overlay').html(html);
-                    });
-                }, 1000);
+                
+                console.log('🔄 Recargando lista de puestos...');
+                // Recargar inmediatamente sin timeout
+                $.get("{{ route('puestos.index') }}" + "?_=" + Date.now(), function(html) {
+                    $('#main-content-overlay').html(html);
+                    console.log('📋 Lista de puestos actualizada después de eliminar');
+                }).fail(function() {
+                    console.error('❌ Error al recargar lista de puestos');
+                    // Si falla AJAX, recargar toda la página
+                    window.location.reload();
+                });
             }
             $('#modal-confirmar-eliminar').fadeOut(150);
         },
         error: function(xhr) {
+            console.error('❌ Error en eliminación:', xhr.status, xhr.responseText);
             if (xhr.status === 409 && xhr.responseJSON.confirm) {
+                console.log('⚠️ Requiere confirmación por relaciones');
                 $('#modal-confirmar-eliminar').fadeOut(150);
                 if (confirm(xhr.responseJSON.message)) {
+                    console.log('✅ Usuario confirmó eliminación forzada');
                     $.ajax({
                         url: "{{ url('puestos') }}/" + puestoIdPendiente,
                         type: 'POST',
@@ -163,13 +194,18 @@ $(document).on('click', '#btn-confirmar-eliminar', function() {
                             force: true
                         },
                         success: function(response) {
+                            console.log('✅ Puesto eliminado forzadamente:', response);
                             if (response.success) {
                                 showAlert('Puesto eliminado correctamente', 'success');
-                                setTimeout(function() {
-                                    $.get("{{ route('puestos.index') }}", function(html) {
-                                        $('#main-content-overlay').html(html);
-                                    });
-                                }, 1000);
+                                
+                                // Recargar inmediatamente
+                                $.get("{{ route('puestos.index') }}" + "?_=" + Date.now(), function(html) {
+                                    $('#main-content-overlay').html(html);
+                                    console.log('📋 Lista actualizada después de eliminación forzada');
+                                }).fail(function() {
+                                    console.error('❌ Error al recargar después de eliminación forzada');
+                                    window.location.reload();
+                                });
                             }
                         },
                         error: function() {

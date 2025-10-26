@@ -1,0 +1,19 @@
+<?php
+// Agregar ruta temporal de debug al final del archivo web.php
+use App\Models\Usuario;
+use Illuminate\Support\Facades\Hash;
+
+Route::get('/debug-login-web', function() {
+    $email = 'admin@grupoprestige.com.mx';
+    $password = '123456';
+    
+    $usuario = Usuario::where('correo', $email)->whereNull('eliminado_en')->first();
+    
+    return response()->json([
+        'usuario_existe' => $usuario ? true : false,
+        'usuario_nombre' => $usuario ? $usuario->nombre : null,
+        'password_correcta' => $usuario ? Hash::check($password, $usuario->contraseña) : false,
+        'csrf_token' => csrf_token(),
+        'session_id' => session()->getId()
+    ]);
+});

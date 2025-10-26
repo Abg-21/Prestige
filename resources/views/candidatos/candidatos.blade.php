@@ -31,11 +31,11 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($candidatos as $candidato)
+            @forelse($candidatos as $candidato)
                 <tr>
                     <td style="padding: 8px; border: 1px solid #ddd;">{{ $candidato->Nombre }}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{{ $candidato->Apellido_P }}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{{ $candidato->Apellido_M }}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">{{ $candidato->Apellido_Paterno }}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">{{ $candidato->Apellido_Materno }}</td>
                     <td style="padding: 8px; border: 1px solid #ddd;">{{ $candidato->Edad }}</td>
                     <td style="padding: 8px; border: 1px solid #ddd;">{{ $candidato->Estado }}</td>
                     <td style="padding: 8px; border: 1px solid #ddd;">{{ $candidato->puesto->Puesto ?? 'Sin asignar' }}</td>
@@ -45,7 +45,7 @@
                             @if (App\Helpers\PermissionHelper::hasPermission('candidatos', 'aprobar'))
                             <button 
                                 type="button" 
-                                onclick="confirmarAprobacion({{ $candidato->idCandidatos }}, '{{ $candidato->Nombre }} {{ $candidato->Apellido_P }}')"
+                                onclick="confirmarAprobacion({{ $candidato->IdCandidatos }}, '{{ $candidato->Nombre }} {{ $candidato->Apellido_Paterno }}')"
                                 style="background: none; border: none; padding: 5px; cursor: pointer; display: flex; flex-direction: column; align-items: center;">
                                 <img src="{{ asset('images/aprobar.png') }}" alt="Aprobar" style="width: 32px; height: 32px;">
                                 <div style="font-size: 13px; color: #4CAF50; margin-top: 4px;">Aprobar</div>
@@ -54,14 +54,14 @@
                             @if (App\Helpers\PermissionHelper::hasPermission('candidatos', 'rechazar'))
                             <button 
                                 type="button" 
-                                onclick="confirmarRechazo({{ $candidato->idCandidatos }}, '{{ $candidato->Nombre }} {{ $candidato->Apellido_P }}')"
+                                onclick="confirmarRechazo({{ $candidato->IdCandidatos }}, '{{ $candidato->Nombre }} {{ $candidato->Apellido_Paterno }}')"
                                 style="background: none; border: none; padding: 5px; cursor: pointer; display: flex; flex-direction: column; align-items: center;">
                                 <img src="{{ asset('images/denegar.png') }}" alt="Rechazar" style="width: 32px; height: 32px;">
                                 <div style="font-size: 13px; color: #f44336; margin-top: 4px;">Rechazar</div>
                             </button>
                             @endif
                             <a 
-                                href="{{ route('candidatos.edit', $candidato->idCandidatos) }}" 
+                                href="{{ route('candidatos.edit', $candidato->IdCandidatos) }}" 
                                 class="ajax-link"
                                 style="background: none; padding: 5px; cursor: pointer; display: flex; flex-direction: column; align-items: center; text-decoration: none;"
                                 @if(!App\Helpers\PermissionHelper::hasPermission('candidatos', 'editar')) disabled @endif>
@@ -71,7 +71,13 @@
                         </div>
                     </td>
                 </tr>
-            @endforeach
+            @empty
+                <tr>
+                    <td colspan="8" style="padding: 20px; text-align: center; color: #999;">
+                        No hay candidatos registrados
+                    </td>
+                </tr>
+            @endforelse
         </tbody>
     </table>
 </div>
@@ -84,7 +90,7 @@
             mostrarNotificacion(`Procesando...`, 'info');
             
             $.ajax({
-                url: `{{ url('/candidatos') }}/${id}/approve`,
+                url: `/candidatos/${id}/aprobar`,
                 type: 'POST',
                 data: {
                     _token: '{{ csrf_token() }}'
@@ -117,11 +123,10 @@
             mostrarNotificacion(`Procesando...`, 'info');
             
             $.ajax({
-                url: `{{ route('candidatos.reject', '') }}/${id}`,
+                url: `/candidatos/${id}/reject`,
                 type: 'POST',
                 data: {
-                    _token: '{{ csrf_token() }}',
-                    _method: 'DELETE'
+                    _token: '{{ csrf_token() }}'
                 },
                 success: function(response) {
                     // Reemplazar el contenido actual con la respuesta

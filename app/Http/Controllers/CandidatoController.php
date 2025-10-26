@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Models\Candidato;
+use App\Helpers\CacheHelper;
 
 class CandidatoController extends Controller
 {
@@ -13,69 +14,94 @@ class CandidatoController extends Controller
      */
     public function aprobar($id)
     {
-        $candidato = \App\Models\Candidato::findOrFail($id);
+        try {
+            $candidato = \App\Models\Candidato::findOrFail($id);
+            
+            // Crear empleado con los datos del candidato
+            $empleado = \App\Models\Empleado::create([
+                'Nombre' => $candidato->Nombre,
+                'Apellido_Paterno' => $candidato->Apellido_Paterno,
+                'Apellido_Materno' => $candidato->Apellido_Materno,
+                'Edad' => $candidato->Edad,
+                'Telefono' => $candidato->Telefono,
+                'Estado' => $candidato->Estado,
+                'Ruta' => $candidato->Ruta,
+                'Escolaridad' => $candidato->Escolaridad,
+                'Correo' => $candidato->Correo,
+                'Experiencia' => $candidato->Experiencia,
+                'Fecha_Ingreso' => now(),
+                'IdPuestoEmpleadoFK' => $candidato->IdPuestoCandidatoFK,
+                // Los campos extra se dejan nulos para llenar después
+                'Curp' => null,
+                'NSS' => null,
+                'RFC' => null,
+                'Codigo_Postal' => null,
+                'Folio' => null,
+                'No_Cuenta' => null,
+                'Tipo_Cuenta' => null,
+                'Sueldo' => null,
+                'Fecha_Egreso' => null,
+                'Eliminado_en' => null
+            ]);
 
-        // Crear empleado con los datos del candidato
-        $empleado = new \App\Models\Empleado();
-        $empleado->Nombre = $candidato->Nombre;
-        $empleado->Apellido_Paterno = $candidato->Apellido_Paterno;
-        $empleado->Apellido_Materno = $candidato->Apellido_Materno;
-        $empleado->Edad = $candidato->Edad;
-        $empleado->Telefono = $candidato->Telefono;
-        $empleado->Estado = $candidato->Estado;
-        $empleado->Ruta = $candidato->Ruta;
-        $empleado->Escolaridad = $candidato->Escolaridad;
-        $empleado->Correo = $candidato->Correo;
-        $empleado->Experiencia = $candidato->Experiencia;
-        $empleado->Fecha_Ingreso = now();
-        $empleado->IdPuestoEmpleadoFK = $candidato->IdPuestoCandidatoFK;
-        // Los campos extra se dejan nulos para editar después
-        $empleado->Curp = null;
-        $empleado->NSS = null;
-        $empleado->RFC = null;
-        $empleado->Codigo_Postal = null;
-        $empleado->Folio = null;
-        $empleado->No_Cuenta = null;
-        $empleado->Tipo_Cuenta = null;
-        $empleado->Sueldo = null;
-        $empleado->Fecha_Egreso = null;
-        $empleado->Eliminado_en = null;
-        $empleado->save();
+            // Eliminar candidato completamente de la base de datos
+            $candidato->delete(); // Eliminación física en lugar de soft delete
+            
+            // Limpiar cache completo para que aparezca en empleados
+            \Cache::forget('candidatos_ultra_fast');
+            \Cache::forget('empleados_ultra_fast'); // IMPORTANTE: limpiar cache de empleados
+            \Cache::forget('puestos_ultra_fast');
 
-        // Marcar candidato como aprobado/eliminado
-        $candidato->Eliminado_en = now();
-        $candidato->save();
+            // Respuesta AJAX
+            if (request()->ajax() || request()->wantsJson()) {
+                $candidatos = \App\Models\Candidato::with('puesto')
+                    ->whereNull('Eliminado_en')
+                    ->orderBy('IdCandidatos', 'desc')
+                    ->get();
+                    
+                $html = view('candidatos.candidatos', compact('candidatos'))
+                    ->with('success', "Candidato {$candidato->Nombre} aprobado y convertido en empleado")
+                    ->render();
+                    
+                return response($html)->header('Content-Type', 'text/html');
+            }
 
-        return redirect()->route('empleados.edit', $empleado->IdEmpleados)
-            ->with('success', 'Candidato aprobado y convertido en empleado. Ahora puedes editar los datos extra.');
+            return redirect()->route('candidatos.index')
+                ->with('success', "Candidato {$candidato->Nombre} aprobado y convertido en empleado correctamente");
+                
+        } catch (\Exception $e) {
+            \Log::error('Error al aprobar candidato: ' . $e->getMessage());
+            
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al aprobar candidato: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return back()->withErrors(['error' => 'Error al aprobar el candidato: ' . $e->getMessage()]);
+        }
     }
 
     // ...existing code...
     public function index()
     {
-        Log::info('Iniciando carga de candidatos', ['is_ajax' => request()->ajax()]);
-        
         try {
-            // Usar el modelo real
-            $candidatos = Candidato::activos()->with('puesto')->get();
-            
-            Log::info('Candidatos obtenidos exitosamente', ['count' => $candidatos->count()]);
-            
+            $candidatos = CacheHelper::getCandidatos();
             return view('candidatos.candidatos', compact('candidatos'));
             
         } catch (\Exception $e) {
-            Log::error('Error en index de candidatos: ' . $e->getMessage());
-            
-            // Devolver vista con datos vacíos en caso de error
+            \Log::error('Error en index de candidatos: ' . $e->getMessage());
             $candidatos = collect([]);
-            return view('candidatos.candidatos', compact('candidatos'))
-                ->with('error', 'No se pudieron cargar los candidatos en este momento.');
+            return view('candidatos.candidatos', compact('candidatos'));
         }
     }
     
     public function create()
     {
-        return view('candidatos.create_candidatos');
+        // CACHE ULTRARRÁPIDO
+        $puestos = CacheHelper::getPuestos();
+        return view('candidatos.create_candidatos', compact('puestos'));
     }
     
     public function store(Request $request)
@@ -83,20 +109,35 @@ class CandidatoController extends Controller
         try {
             $validatedData = $request->validate([
                 'Nombre' => 'required|string|max:25',
-                'Apellido_P' => 'required|string|max:20',
-                'Apellido_M' => 'required|string|max:20',
+                'Apellido_Paterno' => 'required|string|max:20',
+                'Apellido_Materno' => 'required|string|max:20',
                 'Edad' => 'required|integer|min:18|max:100',
-                'Telefono_M' => 'nullable|string|max:15',
-                'Estado' => 'nullable|string',
+                'Telefono' => 'required|string|max:15',
+                'Estado' => 'required|string',
                 'Ruta' => 'nullable|string|max:30',
                 'Escolaridad' => 'required|string',
-                'Correo' => 'nullable|email|max:30',
+                'Correo' => 'required|email|max:30',
                 'Experiencia' => 'required|string|max:10',
-                'Fecha_Postulacion' => 'nullable|date',
-                'id_PuestoCandidatoFK' => 'nullable|exists:puestos,idPuestos'
+                'Fecha_Postulacion' => 'required|date',
+                'IdPuestoCandidatoFK' => 'nullable|exists:puestos,idPuestos'
             ]);
 
-            Candidato::create($validatedData);
+            $candidato = Candidato::create($validatedData);
+
+            // Limpiar cache después de crear
+            \Cache::forget('candidatos_ultra_fast');
+            \Cache::forget('puestos_ultra_fast');
+
+            if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+                // Obtener candidatos frescos sin caché para asegurar que aparezca el nuevo
+                $candidatos = \App\Models\Candidato::with('puesto')
+                    ->whereNull('Eliminado_en')
+                    ->orderBy('IdCandidatos', 'desc')
+                    ->get();
+                    
+                $html = view('candidatos.candidatos', compact('candidatos'))->with('success', 'Candidato creado correctamente')->render();
+                return response($html)->header('Content-Type', 'text/html');
+            }
 
             return redirect()->route('candidatos.index')
                 ->with('success', 'Candidato creado correctamente');
@@ -116,8 +157,14 @@ class CandidatoController extends Controller
     
     public function edit($id)
     {
-        $candidato = Candidato::findOrFail($id);
-        return view('candidatos.edit_candidatos', compact('candidato'));
+        try {
+            $candidato = Candidato::findOrFail($id);
+            $puestos = CacheHelper::getPuestos();
+            return view('candidatos.edit_candidatos', compact('candidato', 'puestos'));
+        } catch (\Exception $e) {
+            Log::error('Error al cargar candidato para editar: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Error al cargar el candidato']);
+        }
     }
     
     public function update(Request $request, $id)
@@ -127,26 +174,54 @@ class CandidatoController extends Controller
             
             $validatedData = $request->validate([
                 'Nombre' => 'required|string|max:25',
-                'Apellido_P' => 'required|string|max:20',
-                'Apellido_M' => 'required|string|max:20',
+                'Apellido_Paterno' => 'required|string|max:20',
+                'Apellido_Materno' => 'required|string|max:20',
                 'Edad' => 'required|integer|min:18|max:100',
-                'Telefono_M' => 'nullable|string|max:15',
-                'Estado' => 'nullable|string',
+                'Telefono' => 'required|string|max:15',
+                'Estado' => 'required|string',
                 'Ruta' => 'nullable|string|max:30',
                 'Escolaridad' => 'required|string',
-                'Correo' => 'nullable|email|max:30',
+                'Correo' => 'required|email|max:30',
                 'Experiencia' => 'required|string|max:10',
-                'Fecha_Postulacion' => 'nullable|date',
-                'id_PuestoCandidatoFK' => 'nullable|exists:puestos,idPuestos'
+                'Fecha_Postulacion' => 'required|date',
+                'IdPuestoCandidatoFK' => 'nullable|exists:puestos,idPuestos'
             ]);
 
             $candidato->update($validatedData);
+            
+            // Limpiar cache
+            \Cache::forget('candidatos_ultra_fast');
+            \Cache::forget('puestos_ultra_fast');
+
+            // Respuesta AJAX
+            if ($request->ajax() || $request->wantsJson()) {
+                // Obtener candidatos frescos para mostrar lista actualizada
+                $candidatos = \App\Models\Candidato::with('puesto')
+                    ->whereNull('Eliminado_en')
+                    ->orderBy('IdCandidatos', 'desc')
+                    ->get();
+                    
+                $html = view('candidatos.candidatos', compact('candidatos'))
+                    ->with('success', "Candidato {$candidato->Nombre} actualizado correctamente")
+                    ->render();
+                    
+                return response($html)->header('Content-Type', 'text/html');
+            }
 
             return redirect()->route('candidatos.index')
                 ->with('success', 'Candidato actualizado correctamente');
                 
         } catch (\Exception $e) {
             Log::error('Error al actualizar candidato: ' . $e->getMessage());
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al actualizar candidato: ' . $e->getMessage(),
+                    'errors' => $e->getMessage()
+                ], 422);
+            }
+            
             return back()->withErrors(['error' => 'Error al actualizar el candidato'])
                         ->withInput();
         }
@@ -171,19 +246,52 @@ class CandidatoController extends Controller
     {
         try {
             $candidato = Candidato::findOrFail($id);
-            $candidato->darDeBaja('Rechazado');
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Candidato rechazado correctamente'
+            
+            // Crear registro en tabla eliminados
+            \App\Models\Eliminado::create([
+                'eliminable_type' => Candidato::class,
+                'eliminable_id' => $candidato->IdCandidatos,
+                'tipo' => 'candidato',
+                'motivo' => 'Candidato rechazado por el usuario',
+                'eliminado_en' => now(),
+                'idUsuarioEliminadoFK' => auth()->id() ?? 1
             ]);
+
+            // Marcar candidato como eliminado para quitarlo de la vista principal
+            $candidato->update(['Eliminado_en' => now()]);
+            
+            // Limpiar cache
+            \Cache::forget('candidatos_ultra_fast');
+            \Cache::forget('puestos_ultra_fast');
+
+            // Respuesta AJAX
+            if (request()->ajax() || request()->wantsJson()) {
+                $candidatos = \App\Models\Candidato::with('puesto')
+                    ->whereNull('Eliminado_en')
+                    ->orderBy('IdCandidatos', 'desc')
+                    ->get();
+                    
+                $html = view('candidatos.candidatos', compact('candidatos'))
+                    ->with('success', "Candidato {$candidato->Nombre} rechazado correctamente")
+                    ->render();
+                    
+                return response($html)->header('Content-Type', 'text/html');
+            }
+
+            return redirect()->route('candidatos.index')
+                ->with('success', "Candidato {$candidato->Nombre} rechazado correctamente");
                 
         } catch (\Exception $e) {
             Log::error('Error al rechazar candidato: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al rechazar el candidato'
-            ], 500);
+            
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al rechazar candidato: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return back()->withErrors(['error' => 'Error al rechazar el candidato: ' . $e->getMessage()]);
         }
     }
 }

@@ -27,7 +27,7 @@ class Puesto extends Model
     }
     public function empleados()
     {
-        return $this->hasMany(Empleado::class, 'id_PuestoEmpleadoFK', 'idPuestos');
+        return $this->hasMany(Empleado::class, 'IdPuestoEmpleadoFK', 'idPuestos');
     }
 
 }

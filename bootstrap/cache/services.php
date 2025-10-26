@@ -37,7 +37,7 @@
     33 => 'Pest\\Laravel\\PestServiceProvider',
     34 => 'Spatie\\Permission\\PermissionServiceProvider',
     35 => 'App\\Providers\\AppServiceProvider',
-    36 => 'App\\Providers\\TelescopeServiceProvider',
+    36 => 'App\\Providers\\PerformanceServiceProvider',
   ),
   'eager' => 
   array (
@@ -61,7 +61,7 @@
     17 => 'Pest\\Laravel\\PestServiceProvider',
     18 => 'Spatie\\Permission\\PermissionServiceProvider',
     19 => 'App\\Providers\\AppServiceProvider',
-    20 => 'App\\Providers\\TelescopeServiceProvider',
+    20 => 'App\\Providers\\PerformanceServiceProvider',
   ),
   'deferred' => 
   array (

@@ -271,9 +271,13 @@
             @endif
 
             {{-- Sección Asistencia - Solo mostrar si tiene permisos --}}
-            {{-- CONTABILIDAD y RH pueden verlo, pero está en desarrollo --}}
+            {{-- CONTABILIDAD y RH pueden verlo --}}
             @if(\App\Helpers\PermissionHelper::hasPermission('asistencia', 'ver'))
-                <div class="menu-item" onclick="alert('Módulo de Asistencia en desarrollo')">Asistencia</div>
+                <div class="menu-item">
+                    <a href="{{ route('asistencia.index') }}" class="ajax-link" style="color: inherit; text-decoration: none; display: block; width: 100%; height: 100%;">
+                        Asistencia
+                    </a>
+                </div>
             @endif
             
             {{-- Sección Nómina - Solo mostrar si tiene permisos --}}
@@ -285,7 +289,9 @@
             {{-- Sección Eliminados - Solo mostrar si tiene permisos --}}
             {{-- Solo ADMIN y RH pueden verlo --}}
             @if(\App\Helpers\PermissionHelper::hasPermission('eliminados', 'ver'))
-                <div class="menu-item" onclick="alert('Módulo de Eliminados en desarrollo')">Eliminados</div>
+                <div class="menu-item">
+                    <a href="{{ route('eliminados.index') }}" class="ajax-link" style="color: inherit; text-decoration: none; display: block;">Eliminados</a>
+                </div>
             @endif
 
             {{-- Sección Configuración - Solo mostrar si tiene acceso a usuarios O roles --}}
@@ -359,17 +365,18 @@
             }
         }
         
+        {{-- CONTROL DE SESIÓN DESHABILITADO PARA MÁXIMO RENDIMIENTO
         setInterval(function() {
             $.ajax({
-                url: "{{ route('check.session') }}",
+                url: "route('check.session')",
                 type: "POST",
                 headers: {
-                    'X-CSRF-TOKEN': "{{ csrf_token() }}"
+                    'X-CSRF-TOKEN': "csrf_token()"
                 },
                 success: function(response) {
                     if (response.expired) {
                         alert("Tu sesión ha expirado por inactividad. Por favor, inicia sesión nuevamente.");
-                        window.location.href = "{{ route('login') }}";
+                        window.location.href = "route('login')";
                     }
                 }
             });
@@ -377,13 +384,14 @@
         
         $(document).on('click keypress mousemove', function() {
             $.ajax({
-                url: "{{ route('update.activity') }}",
+                url: "route('update.activity')",
                 type: "POST",
                 headers: {
-                    'X-CSRF-TOKEN': "{{ csrf_token() }}"
+                    'X-CSRF-TOKEN': "csrf_token()"
                 }
             });
         });
+        --}}
         
         // Código para controlar los submenús - SOLO HOVER, SIN POSICIONAMIENTO
         document.querySelectorAll('.menu-item').forEach(item => {
@@ -481,9 +489,20 @@
             // Insertar el contenido
             $("#main-content-overlay").html(data);
             
-            // Habilitar interacción
-            $("#main-content-overlay *").css({
-                'pointer-events': 'auto'
+            // Habilitar interacción específica para diferentes tipos de elementos
+            $("#main-content-overlay input, #main-content-overlay select, #main-content-overlay textarea").css({
+                'pointer-events': 'auto',
+                'user-select': 'text',
+                'cursor': 'text'
+            });
+            
+            $("#main-content-overlay select").css({
+                'cursor': 'pointer'
+            });
+            
+            $("#main-content-overlay button, #main-content-overlay a, #main-content-overlay .btn").css({
+                'pointer-events': 'auto',
+                'cursor': 'pointer'
             });
             
             // Forzar recálculo de scroll y reactivar eventos

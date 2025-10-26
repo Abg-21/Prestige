@@ -12,27 +12,36 @@ class SessionController extends Controller
     }
 
     /**
-     * Verificar si la sesión ha expirado
+     * Verificar si la sesión ha expirado - Ultra optimizado
      */
     public function checkSession()
     {
-        $user = auth()->user();
-        $lastActivity = session('last_activity');
-        $timeout = config('session.lifetime') * 60; // Convertir minutos a segundos
-
-        if ($lastActivity && (time() - $lastActivity > $timeout)) {
-            return response()->json(['expired' => true]);
-        }
-
-        return response()->json(['expired' => false]);
+        // Cache para evitar consultas repetitivas
+        $cacheKey = 'session_check_' . auth()->id();
+        
+        return \Cache::remember($cacheKey, 30, function() {
+            $lastActivity = session('last_activity', time());
+            $timeout = config('session.lifetime') * 60;
+            
+            $expired = $lastActivity && (time() - $lastActivity > $timeout);
+            return response()->json(['expired' => $expired]);
+        });
     }
 
     /**
-     * Actualizar la actividad del usuario
+     * Actualizar la actividad del usuario - Ultra optimizado
      */
     public function updateActivity()
     {
-        session(['last_activity' => time()]);
-        return response()->json(['success' => true]);
+        // Cache ultra rápido - solo actualiza cada 30 segundos
+        $cacheKey = 'user_activity_' . auth()->id();
+        $lastUpdate = \Cache::get($cacheKey, 0);
+        
+        if (time() - $lastUpdate > 30) {
+            \Cache::put($cacheKey, time(), 300); // 5 minutos
+            session(['last_activity' => time()]);
+        }
+        
+        return response('', 204); // Sin contenido, más rápido
     }
 }

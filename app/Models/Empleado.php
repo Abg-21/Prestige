@@ -30,6 +30,7 @@ class Empleado extends Model
         'RFC',
         'Codigo_Postal',
         'Folio',
+        'Codigo',
         'No_Cuenta',
         'Tipo_Cuenta',
         'Sueldo',
@@ -48,18 +49,23 @@ class Empleado extends Model
         'Edad' => 'integer',
         'Fecha_Ingreso' => 'date',
         'Fecha_Egreso' => 'date',
+        'Eliminado_en' => 'datetime',
         'Sueldo' => 'decimal:2',
     ];
 
     public function puesto()
     {
-        return $this->belongsTo(Puesto::class, 'id_PuestoEmpleadoFK', 'idPuestos')
-                    ->select(['idPuestos', 'Puesto']);
+        return $this->belongsTo(Puesto::class, 'IdPuestoEmpleadoFK', 'idPuestos');
     }
 
     public function documentos()
     {
-        return $this->hasMany(Documento::class, 'idEmpleadoFK', 'idEmpleado');
+        return $this->hasMany(Documento::class, 'IdEmpleadoDocumentoFK', 'IdEmpleados');
+    }
+
+    public function asistencias()
+    {
+        return $this->hasMany(Asistencia::class, 'empleado_id', 'IdEmpleados');
     }
 }
 

@@ -47,7 +47,7 @@
                             <td style="padding: 10px; border: 1px solid #ddd;">{{ $giro->Descripcion }}</td>
                             <td style="padding: 10px; border: 1px solid #ddd;">
                                 <div style="display: flex; gap: 18px; justify-content: center;">
-                                    <a href="{{ route('giros.edit', ['giro' => $giro->idGiros]) }}" class="ajax-link" style="text-align: center;">
+                                    <a href="{{ route('giros.edit', $giro->idGiros) }}" class="ajax-link" style="text-align: center;">
                                         <img src="{{ asset('images/editar.png') }}" alt="Editar" style="width: 32px; height: 32px;">
                                         <div style="font-size: 13px; color: #555;">Editar</div>
                                     </a>

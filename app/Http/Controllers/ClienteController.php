@@ -28,7 +28,14 @@ class ClienteController extends Controller
     public function store(Request $request)
     {
         // Debug: ver los datos que llegan
+        \Log::info('=== CLIENTE STORE INICIADO ===');
         \Log::info('Datos del formulario clientes:', $request->all());
+        \Log::info('Es AJAX?', [
+            'ajax()' => $request->ajax(),
+            'wantsJson()' => $request->wantsJson(), 
+            'X-Requested-With' => $request->header('X-Requested-With'),
+            'headers' => $request->headers->all()
+        ]);
         
         // Verificar si ya existe un cliente con ese nombre
         $existingCliente = Cliente::where('Nombre', $request->Nombre)->first();
@@ -52,10 +59,16 @@ class ClienteController extends Controller
 
             $cliente = Cliente::create($validatedData);
 
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+                \Log::info('=== RESPUESTA AJAX CLIENTE ===');
                 // Para peticiones AJAX, devolver la vista completa de clientes
                 $clientes = Cliente::with('puestos')->get();
-                return view('clientes.cliente', compact('clientes'))->with('success', 'Cliente creado correctamente');
+                \Log::info('Clientes obtenidos:', ['count' => $clientes->count()]);
+                
+                $html = view('clientes.cliente', compact('clientes'))->with('success', 'Cliente creado correctamente')->render();
+                \Log::info('HTML generado:', ['length' => strlen($html), 'preview' => substr($html, 0, 200)]);
+                
+                return response($html)->header('Content-Type', 'text/html');
             }
 
             return redirect()->route('clientes.index')
@@ -64,25 +77,26 @@ class ClienteController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Error de validación en clientes:', $e->errors());
             
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'errors' => $e->errors()
-                ], 422);
+            if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+                // Para AJAX, devolver la vista de crear cliente con errores
+                return view('clientes.create_cliente')->withErrors($e->errors())->withInput($request->all());
             }
             
             return back()->withErrors($e->errors())->withInput();
         }
     }
 
-    public function edit(Cliente $cliente)
+    public function edit($id)
     {
+        $cliente = Cliente::findOrFail($id);
         $puestos = Puesto::all();
         return view('clientes.edit_cliente', compact('cliente', 'puestos'));
     }
 
-    public function update(Request $request, Cliente $cliente)
+    public function update(Request $request, $id)
     {
+        $cliente = Cliente::findOrFail($id);
+        
         $messages = [
             'Nombre.required' => 'El nombre del cliente es obligatorio',
             'Nombre.unique' => 'El nombre ya está ocupado por otro cliente',
@@ -100,10 +114,16 @@ class ClienteController extends Controller
 
         $cliente->update($validatedData);
 
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            \Log::info('=== UPDATE AJAX CLIENTE ===');
             // Para peticiones AJAX, devolver la vista completa de clientes
             $clientes = Cliente::with('puestos')->get();
-            return view('clientes.cliente', compact('clientes'))->with('success', 'Cliente actualizado correctamente');
+            \Log::info('Clientes obtenidos para update:', ['count' => $clientes->count()]);
+            
+            $html = view('clientes.cliente', compact('clientes'))->with('success', 'Cliente actualizado correctamente')->render();
+            \Log::info('HTML update generado:', ['length' => strlen($html), 'preview' => substr($html, 0, 200)]);
+            
+            return response($html)->header('Content-Type', 'text/html');
         }
 
         return redirect()->route('clientes.index')
